@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>HFS Ripple Checker</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, system-ui, sans-serif; background: #000; color: #fff; min-height: 100vh; padding: 12px; max-width: 700px; margin: 0 auto; }
+.hdr { background: #111; border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; border-left: 4px solid #3b82f6; }
+.hdr h1 { font-size: 18px; font-weight: 900; }
+.hdr p { font-size: 10px; color: #555; margin-top: 2px; }
+textarea { width: 100%; height: 160px; background: #111; border: 1px solid #333; border-radius: 12px; padding: 12px; color: #fff; font-size: 13px; font-family: monospace; resize: vertical; }
+textarea::placeholder { color: #444; }
+.btn { width: 100%; padding: 14px; border-radius: 12px; border: none; color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; margin-top: 8px; display: block; }
+.btn-blue { background: #3b82f6; }
+.btn-green { background: #16a34a; }
+.btn-red { background: #dc2626; }
+.btn-dark { background: #222; font-size: 12px; }
+.card { background: #111; border-radius: 12px; padding: 12px; margin-top: 10px; border: 1px solid #222; }
+.stats { display: flex; gap: 6px; margin-top: 10px; }
+.stat { border-radius: 10px; padding: 10px 6px; text-align: center; flex: 1; }
+.stat .num { font-size: 22px; font-weight: 900; }
+.stat .lbl { font-size: 9px; margin-top: 2px; }
+.s-grn { background: #052e16; } .s-grn .lbl { color: #4ade80; }
+.s-red { background: #450a0a; } .s-red .lbl { color: #f87171; }
+.s-gry { background: #1a1a1a; } .s-gry .lbl { color: #666; }
+.pct { text-align: center; padding: 8px; font-size: 13px; color: #fbbf24; font-weight: 800; }
+.prog { background: #222; border-radius: 8px; height: 8px; overflow: hidden; margin: 6px 0; }
+.prog-bar { background: #3b82f6; height: 100%; border-radius: 8px; transition: width 0.5s; }
+.tbl-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #222; margin-top: 10px; max-height: 65vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 600px; }
+thead { position: sticky; top: 0; z-index: 2; }
+th { background: #1a1a2e; color: #94a3b8; padding: 8px 6px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; border-bottom: 2px solid #3b82f6; }
+td { padding: 7px 6px; border-bottom: 1px solid #1a1a1a; white-space: nowrap; }
+tr:nth-child(even) { background: #0a0a0a; }
+tr.row-conn { border-left: 3px solid #22c55e; }
+tr.row-knock { border-left: 3px solid #ef4444; }
+tr.row-na { border-left: 3px solid #333; }
+.t-num { color: #3b82f6; font-weight: 800; font-size: 13px; }
+.t-street { color: #94a3b8; }
+.t-owner { color: #e2e8f0; font-weight: 600; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
+.t-date { color: #64748b; font-size: 10px; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; }
+.tag-yes { background: #052e16; color: #4ade80; }
+.tag-no { background: #450a0a; color: #f87171; }
+.tag-na { background: #1a1a1a; color: #555; }
+.err { background: #450a0a; border-radius: 10px; padding: 10px; margin-top: 10px; font-size: 12px; color: #fca5a5; }
+.hide { display: none; }
+.sort-bar { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.sort-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid #333; background: #111; color: #888; font-size: 11px; font-weight: 600; cursor: pointer; }
+.sort-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>⚡ HFS RIPPLE CHECK</h1>
+  <p>Paste addresses → see results → download CSV</p>
+</div>
+
+<div id="v-input">
+  <textarea id="input" placeholder="One address per line:&#10;1515 Laggan Ln Indian Trail NC 28079&#10;1303 Tollcross Rd Indian Trail NC 28079&#10;&#10;Or with owner:&#10;SMITH JOHN|123 Main St Statesville NC 28677"></textarea>
+  <button class="btn btn-blue" onclick="parseAddresses()">PARSE ADDRESSES</button>
+</div>
+
+<div id="v-parsed" class="hide">
+  <div class="card">
+    <div style="font-size:14px;font-weight:800" id="parse-count"></div>
+    <div id="parse-list" style="max-height:180px;overflow:auto;margin-top:6px;font-size:11px"></div>
+  </div>
+  <button class="btn btn-green" onclick="runCheck()">🔍 CHECK ALL</button>
+  <button class="btn btn-dark" onclick="showView('v-input')">← Back</button>
+</div>
+
+<div id="v-running" class="hide">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;font-size:12px">
+      <span id="run-addr" style="font-weight:700"></span>
+      <span id="run-count" style="color:#3b82f6;font-weight:800"></span>
+    </div>
+    <div class="prog"><div class="prog-bar" id="run-bar"></div></div>
+    <div id="run-eta" style="font-size:10px;color:#444"></div>
+  </div>
+  <div class="stats" id="run-stats"></div>
+  <div id="run-err" class="err hide"></div>
+  <button class="btn btn-red" onclick="stopCheck()">⏹ STOP & VIEW RESULTS</button>
+</div>
+
+<div id="v-results" class="hide">
+  <div class="stats" id="res-stats"></div>
+  <div class="pct" id="res-pct"></div>
+  <div class="sort-bar">
+    <span style="color:#555;font-size:11px;padding:6px 0">Sort:</span>
+    <button class="sort-btn active" onclick="sortBy('street')" id="sb-street">Street</button>
+    <button class="sort-btn" onclick="sortBy('num')" id="sb-num">House #</button>
+    <button class="sort-btn" onclick="sortBy('status')" id="sb-status">Status</button>
+    <button class="sort-btn" onclick="sortBy('date')" id="sb-date">Newest</button>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Street</th><th>Owner</th><th>Ripple</th><th>Fiber</th><th>Connected</th><th>Created</th></tr></thead>
+      <tbody id="res-tbody"></tbody>
+    </table>
+  </div>
+  <button class="btn btn-blue" onclick="downloadCSV()" style="margin-top:12px">⬇️ DOWNLOAD CSV</button>
+  <button class="btn btn-dark" onclick="resetAll()">🔄 NEW CHECK</button>
+</div>
+
+<script>
+const API="https://ripple-api.spitfireinbound.com/api";
+let homes=[],results=[],stopped=false,currentSort="street";
+function $(id){return document.getElementById(id)}
+function showView(id){["v-input","v-parsed","v-running","v-results"].forEach(v=>$(v).classList.toggle("hide",v!==id))}
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+async function apiFetch(url){try{const r=await fetch(url);if(r.ok)return await r.json();if(r.status===429){await wait(20000);return null}}catch(e){}return null}
+
+function parseAddresses(){
+  const raw=$("input").value.trim();if(!raw)return;
+  const lines=raw.split("\n").map(l=>l.trim()).filter(Boolean);
+  homes=[];const seen=new Set();
+  for(const line of lines){
+    let owner="",addr="";
+    if(line.includes("|")){[owner,addr]=line.split("|").map(s=>s.trim())}
+    else{const m=line.match(/^(\d+\s+.+)/);if(m)addr=m[1].trim()}
+    if(!addr)continue;
+    const num=addr.match(/^\d+/)?.[0];
+    if(!num||seen.has(num+addr.slice(num.length,num.length+20)))continue;
+    seen.add(num+addr.slice(num.length,num.length+20));
+    if(!addr.match(/\d{5}/)&&!addr.match(/NC/i))addr+=" NC";
+    homes.push({owner,address:addr});
+  }
+  if(!homes.length)return alert("No addresses found");
+  $("parse-count").textContent="✅ "+homes.length+" addresses ready";
+  $("parse-list").innerHTML=homes.map(h=>{
+    const num=h.address.match(/^\d+/)?.[0]||"";
+    return '<div style="padding:3px 0;border-bottom:1px solid #1a1a1a"><span style="color:#3b82f6;font-weight:700">'+num+'</span> <span style="color:#888">'+h.address.replace(/^\d+\s*/,"").slice(0,40)+'</span>'+(h.owner?' <span style="color:#555;font-size:10px">— '+h.owner.slice(0,20)+'</span>':'')+'</div>';
+  }).join("");
+  showView("v-parsed");
+}
+
+function renderStats(target,cn,kn,ni){
+  $(target).innerHTML='<div class="stat s-grn"><div class="num">'+cn+'</div><div class="lbl">CONNECTED</div></div><div class="stat s-red"><div class="num">'+kn+'</div><div class="lbl">KNOCK</div></div><div class="stat s-gry"><div class="num">'+ni+'</div><div class="lbl">NOT IN RIPPLE</div></div>';
+}
+
+function renderTable(){
+  const sorted=[...results];
+  if(currentSort==="street")sorted.sort((a,b)=>a.street.localeCompare(b.street)||a.num-b.num);
+  else if(currentSort==="num")sorted.sort((a,b)=>a.num-b.num);
+  else if(currentSort==="status")sorted.sort((a,b)=>(a.connected?0:a.inRipple?1:2)-(b.connected?0:b.inRipple?1:2)||a.street.localeCompare(b.street));
+  else if(currentSort==="date")sorted.sort((a,b)=>(b.date||"0").localeCompare(a.date||"0"));
+
+  $("res-tbody").innerHTML=sorted.map(r=>{
+    const cls=r.connected?"row-conn":r.inRipple?"row-knock":"row-na";
+    const rip=r.inRipple?'<span class="tag tag-yes">YES</span>':'<span class="tag tag-na">NO</span>';
+    const fib=r.fiber?'<span class="tag tag-yes">YES</span>':r.inRipple?'<span class="tag tag-no">NO</span>':'<span class="tag tag-na">—</span>';
+    const con=r.connected?'<span class="tag tag-yes">SKIP ✓</span>':r.inRipple?'<span class="tag tag-no">KNOCK</span>':'<span class="tag tag-na">—</span>';
+    return '<tr class="'+cls+'"><td class="t-num">'+r.num+'</td><td class="t-street">'+r.street+'</td><td class="t-owner" title="'+r.owner+'">'+(r.owner?.slice(0,22)||"—")+'</td><td>'+rip+'</td><td>'+fib+'</td><td>'+con+'</td><td class="t-date">'+(r.date||"—")+'</td></tr>';
+  }).join("");
+}
+
+function sortBy(key){
+  currentSort=key;
+  document.querySelectorAll(".sort-btn").forEach(b=>b.classList.remove("active"));
+  $("sb-"+key).classList.add("active");
+  renderTable();
+}
+
+async function runCheck(){
+  showView("v-running");stopped=false;results=[];
+  const aC={},sC={};
+  for(let i=0;i<homes.length;i++){
+    if(stopped)break;
+    const h=homes[i];
+    const num=h.address.match(/^\d+/)?.[0]||"";
+    const stM=h.address.match(/\d+\s+(.+?)(?:\s+(?:Statesville|Monroe|Indian Trail|Carthage|Whispering|High Point|NC|28\d))/i);
+    const street=stM?stM[1].trim():h.address.replace(/^\d+\s*/,"").split(/\s+NC/i)[0].trim();
+    const kw=street.split(" ")[0].toLowerCase();
+    $("run-addr").textContent=num+" "+street;
+    $("run-count").textContent=(i+1)+"/"+homes.length;
+    $("run-bar").style.width=((i+1)/homes.length*100)+"%";
+    $("run-eta").textContent="~"+Math.max(1,Math.round((homes.length-i)*8/60))+" min left";
+    try{
+      if(!sC[kw]){sC[kw]=await apiFetch(API+"/predefined-premises?address="+encodeURIComponent(h.address)+"&service_provider=ripple");await wait(5000)}
+      const arr=sC[kw]?.addressArray||[];
+      const match=arr.find(a=>(a.full_text.startsWith(num+",")||a.full_text.startsWith(num+" "))&&a.full_text.toLowerCase().includes(kw));
+      if(!match){results.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:""})}
+      else{
+        const aid=match.area_id||"";
+        if(aid&&!aC[aid]){await wait(3000);aC[aid]=await apiFetch(API+"/area-has-fiber?areaId="+aid+"&service_provider=ripple")}
+        const fiber=aC[aid]?.areaHasFiber==="Connected";
+        let connected=false;
+        if(match.premise_id){await wait(3000);const sd=await apiFetch(API+"/query-existing-service?premiseGuid="+match.premise_id+"&service_provider=ripple");if(sd?.premiseHasService)connected=true}
+        results.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:true,fiber,connected,date:match.created_at?.slice(0,10)||""})
+      }
+    }catch(e){
+      $("run-err").textContent="❌ "+e.message;$("run-err").classList.remove("hide");
+      results.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:""})
+    }
+    const cn=results.filter(r=>r.connected).length;
+    const kn=results.filter(r=>r.inRipple&&!r.connected).length;
+    const ni=results.filter(r=>!r.inRipple).length;
+    renderStats("run-stats",cn,kn,ni);
+  }
+  showResults();
+}
+
+function stopCheck(){stopped=true;showResults()}
+
+function showResults(){
+  showView("v-results");
+  const cn=results.filter(r=>r.connected).length;
+  const kn=results.filter(r=>r.inRipple&&!r.connected).length;
+  const ni=results.filter(r=>!r.inRipple).length;
+  renderStats("res-stats",cn,kn,ni);
+  $("res-pct").textContent=cn+kn>0?"📊 "+Math.round(cn/(cn+kn)*100)+"% Penetration":"";
+  renderTable();
+}
+
+function downloadCSV(){
+  const sorted=[...results].sort((a,b)=>a.street.localeCompare(b.street)||a.num-b.num);
+  let csv="House Number,Street,Address,Owner,In Ripple,Fiber,Connected,Created\n";
+  csv+=sorted.map(r=>r.num+',"'+r.street+'","'+r.address+'","'+r.owner+'",'+(r.inRipple?"YES":"NO")+","+(r.fiber?"YES":"NO")+","+(r.connected?"YES":"NO")+","+r.date).join("\n");
+  const blob=new Blob([csv],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="Ripple_"+new Date().toISOString().slice(0,10)+".csv";a.click();
+}
+
+function resetAll(){homes=[];results=[];$("input").value="";showView("v-input")}
+</script>
+</body>
+</html>
