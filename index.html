@@ -3,230 +3,428 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>HFS Ripple Checker</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>HFS Field Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, system-ui, sans-serif; background: #000; color: #fff; min-height: 100vh; padding: 12px; max-width: 700px; margin: 0 auto; }
-.hdr { background: #111; border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; border-left: 4px solid #3b82f6; }
-.hdr h1 { font-size: 18px; font-weight: 900; }
-.hdr p { font-size: 10px; color: #555; margin-top: 2px; }
-textarea { width: 100%; height: 160px; background: #111; border: 1px solid #333; border-radius: 12px; padding: 12px; color: #fff; font-size: 13px; font-family: monospace; resize: vertical; }
-textarea::placeholder { color: #444; }
-.btn { width: 100%; padding: 14px; border-radius: 12px; border: none; color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; margin-top: 8px; display: block; }
-.btn-blue { background: #3b82f6; }
-.btn-green { background: #16a34a; }
-.btn-red { background: #dc2626; }
-.btn-dark { background: #222; font-size: 12px; }
-.card { background: #111; border-radius: 12px; padding: 12px; margin-top: 10px; border: 1px solid #222; }
-.stats { display: flex; gap: 6px; margin-top: 10px; }
-.stat { border-radius: 10px; padding: 10px 6px; text-align: center; flex: 1; }
-.stat .num { font-size: 22px; font-weight: 900; }
-.stat .lbl { font-size: 9px; margin-top: 2px; }
-.s-grn { background: #052e16; } .s-grn .lbl { color: #4ade80; }
-.s-red { background: #450a0a; } .s-red .lbl { color: #f87171; }
-.s-gry { background: #1a1a1a; } .s-gry .lbl { color: #666; }
-.pct { text-align: center; padding: 8px; font-size: 13px; color: #fbbf24; font-weight: 800; }
-.prog { background: #222; border-radius: 8px; height: 8px; overflow: hidden; margin: 6px 0; }
-.prog-bar { background: #3b82f6; height: 100%; border-radius: 8px; transition: width 0.5s; }
-.tbl-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #222; margin-top: 10px; max-height: 65vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 600px; }
-thead { position: sticky; top: 0; z-index: 2; }
-th { background: #1a1a2e; color: #94a3b8; padding: 8px 6px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; border-bottom: 2px solid #3b82f6; }
-td { padding: 7px 6px; border-bottom: 1px solid #1a1a1a; white-space: nowrap; }
-tr:nth-child(even) { background: #0a0a0a; }
-tr.row-conn { border-left: 3px solid #22c55e; }
-tr.row-knock { border-left: 3px solid #ef4444; }
-tr.row-na { border-left: 3px solid #333; }
-.t-num { color: #3b82f6; font-weight: 800; font-size: 13px; }
-.t-street { color: #94a3b8; }
-.t-owner { color: #e2e8f0; font-weight: 600; max-width: 150px; overflow: hidden; text-overflow: ellipsis; }
-.t-date { color: #64748b; font-size: 10px; }
-.tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; }
-.tag-yes { background: #052e16; color: #4ade80; }
-.tag-no { background: #450a0a; color: #f87171; }
-.tag-na { background: #1a1a1a; color: #555; }
-.err { background: #450a0a; border-radius: 10px; padding: 10px; margin-top: 10px; font-size: 12px; color: #fca5a5; }
-.hide { display: none; }
-.sort-bar { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-.sort-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid #333; background: #111; color: #888; font-size: 11px; font-weight: 600; cursor: pointer; }
-.sort-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+:root{--bg:#030712;--card:#0f1219;--card2:#161b26;--border:#1e2533;--blue:#3b82f6;--green:#22c55e;--red:#ef4444;--orange:#f97316;--yellow:#eab308;--purple:#a855f7;--text:#e2e8f0;--muted:#64748b;--font:'Plus Jakarta Sans',system-ui,sans-serif;--mono:'JetBrains Mono',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;padding:12px;max-width:720px;margin:0 auto;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:#333;border-radius:4px}
+
+.hdr{background:linear-gradient(135deg,#0a1628,#162040);border-radius:16px;padding:16px 18px;margin-bottom:14px;border:1px solid #1e3a5f;position:relative;overflow:hidden}
+.hdr::after{content:'';position:absolute;top:-50%;right:-20%;width:200px;height:200px;background:radial-gradient(circle,rgba(59,130,246,0.08),transparent);border-radius:50%}
+.hdr h1{font-size:20px;font-weight:900;letter-spacing:-0.5px;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr p{font-size:10px;color:var(--muted);margin-top:3px;font-weight:500}
+
+textarea{width:100%;height:170px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;color:var(--text);font-size:13px;font-family:var(--mono);resize:vertical;transition:border-color .2s}
+textarea:focus{outline:none;border-color:var(--blue)}
+textarea::placeholder{color:#334155}
+
+.btn{width:100%;padding:15px;border-radius:14px;border:none;color:#fff;font-weight:800;font-size:15px;cursor:pointer;margin-top:8px;display:block;font-family:var(--font);transition:transform .1s;letter-spacing:-0.3px}
+.btn:active{transform:scale(0.98)}
+.btn-blue{background:linear-gradient(135deg,#2563eb,#3b82f6)}.btn-green{background:linear-gradient(135deg,#15803d,#22c55e)}.btn-red{background:linear-gradient(135deg,#b91c1c,#ef4444)}.btn-dark{background:var(--card2);font-size:12px;border:1px solid var(--border)}
+
+.card{background:var(--card);border-radius:14px;padding:14px;margin-top:10px;border:1px solid var(--border)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.stat{border-radius:12px;padding:10px 4px;text-align:center;border:1px solid transparent}
+.stat .num{font-size:20px;font-weight:900;font-family:var(--mono)}.stat .lbl{font-size:8px;margin-top:3px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.s-grn{background:#052e1680;border-color:#22c55e33}.s-grn .num{color:#4ade80}.s-grn .lbl{color:#4ade80}
+.s-red{background:#450a0a80;border-color:#ef444433}.s-red .num{color:#f87171}.s-red .lbl{color:#f87171}
+.s-org{background:#43140780;border-color:#f9731633}.s-org .num{color:#fb923c}.s-org .lbl{color:#fb923c}
+.s-gry{background:#1a1a1a80;border-color:#33333333}.s-gry .num{color:#666}.s-gry .lbl{color:#666}
+
+.pct-bar{margin-top:10px;background:var(--card2);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;border:1px solid var(--border)}
+.pct-fill{height:6px;border-radius:3px;flex:1;background:#1e293b;overflow:hidden}
+.pct-fill div{height:100%;border-radius:3px;background:linear-gradient(90deg,#22c55e,#eab308,#ef4444);transition:width .5s}
+.pct-text{font-size:13px;font-weight:900;font-family:var(--mono);min-width:40px;text-align:right}
+
+.prog{background:#1e293b;border-radius:8px;height:6px;overflow:hidden;margin:8px 0}
+.prog-bar{background:linear-gradient(90deg,#3b82f6,#60a5fa);height:100%;border-radius:8px;transition:width .5s}
+
+.tabs{display:flex;gap:4px;margin-top:12px;background:var(--card);border-radius:12px;padding:4px;border:1px solid var(--border)}
+.tab{flex:1;padding:8px;border-radius:9px;border:none;background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s}
+.tab.active{background:var(--blue);color:#fff}
+
+.filter-bar{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.fil{padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s}
+.fil.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+.search{width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:12px;margin-top:8px;font-family:var(--font)}
+.search:focus{outline:none;border-color:var(--blue)}
+
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-top:8px;max-height:55vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:11px;min-width:650px}
+thead{position:sticky;top:0;z-index:2}
+th{background:#0f1729;color:var(--muted);padding:8px 5px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-bottom:1px solid var(--blue);cursor:pointer;font-family:var(--font)}
+td{padding:6px 5px;border-bottom:1px solid #111827;white-space:nowrap;vertical-align:top}
+tr:nth-child(even) td{background:#0a0f1a}
+tr.row-conn{border-left:3px solid var(--green)}
+tr.row-hot{border-left:3px solid var(--orange)}
+tr.row-knock{border-left:3px solid var(--red)}
+tr.row-na{border-left:3px solid #222}
+.t-num{color:var(--blue);font-weight:800;font-size:13px;font-family:var(--mono)}
+.t-street{color:#94a3b8;font-weight:500}
+.t-owner{color:var(--text);font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.t-date{color:var(--muted);font-size:10px;font-family:var(--mono)}
+.tag{display:inline-block;padding:2px 7px;border-radius:6px;font-size:9px;font-weight:800;letter-spacing:.3px}
+.tag-yes{background:#052e1680;color:#4ade80;border:1px solid #22c55e33}
+.tag-no{background:#450a0a80;color:#f87171;border:1px solid #ef444433}
+.tag-na{background:#1a1a1a;color:#555}
+.tag-hot{background:#43140780;color:#fb923c;border:1px solid #f9731633}
+.tag-skip{background:#052e1680;color:#4ade80;border:1px solid #22c55e33}
+.tag-knock{background:#450a0a80;color:#f87171;border:1px solid #ef444433}
+.score{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:900;font-family:var(--mono)}
+.sc-hi{background:#052e1680;color:#4ade80;border:1px solid #22c55e33}
+.sc-md{background:#43140780;color:#fb923c;border:1px solid #f9731633}
+.sc-lo{background:#450a0a80;color:#f87171;border:1px solid #ef444433}
+.sc-no{background:#111;color:#444}
+.walk-badge{display:inline-block;background:#1e293b;border-radius:4px;padding:1px 5px;font-size:8px;color:#64748b;font-weight:700;margin-left:4px;font-family:var(--mono)}
+
+/* PITCH POPUP */
+.pitch-row{display:none;background:linear-gradient(135deg,#0c1222,#1a1033)!important;border-left:3px solid var(--purple)!important}
+.pitch-row.show{display:table-row}
+.pitch-cell{padding:10px 12px!important;white-space:normal!important}
+.pitch-text{font-size:12px;line-height:1.6;color:#e2e8f0}
+.pitch-text b{color:#a78bfa}
+.pitch-label{font-size:9px;color:var(--purple);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.pitch-copy{background:var(--purple);color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;margin-top:6px;font-family:var(--font)}
+.pitch-copy:active{opacity:0.8}
+
+/* INSIGHTS */
+.insight{background:linear-gradient(135deg,#0c1222,#111d35);border:1px solid #1e3a5f;border-radius:14px;padding:16px;margin-top:10px}
+.insight h3{color:#60a5fa;font-size:14px;margin-bottom:10px}
+.insight-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:10px}
+.insight-card{background:#0a1628;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center}
+.insight-card .ic-num{font-size:22px;font-weight:900;font-family:var(--mono)}
+.insight-card .ic-lbl{font-size:9px;color:var(--muted);margin-top:2px;font-weight:600}
+.tip{background:#0a1628;border-radius:10px;padding:10px 12px;margin-top:6px;border-left:3px solid var(--yellow);font-size:11px;line-height:1.5;color:#cbd5e1}
+.tip b{color:#fff}
+
+.street-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px;display:flex;align-items:center;gap:10px}
+.street-bar{flex:1;background:#1e293b;border-radius:4px;height:8px;overflow:hidden}
+.street-bar div{height:100%;border-radius:4px;transition:width .3s}
+.street-name{font-size:12px;font-weight:700;min-width:100px}
+.street-nums{font-size:10px;color:var(--muted);font-family:var(--mono);min-width:80px;text-align:right}
+
+.comm{background:linear-gradient(135deg,#0a1628,#0c2810);border:1px solid #166534;border-radius:14px;padding:16px;margin-top:10px}
+.comm h3{color:var(--green);font-size:14px;margin-bottom:8px}
+.comm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.comm-item{background:#05150a;border:1px solid #16653433;border-radius:10px;padding:10px;text-align:center}
+.comm-item .cm-num{font-size:18px;font-weight:900;font-family:var(--mono);color:var(--green)}
+.comm-item .cm-lbl{font-size:8px;color:var(--muted);margin-top:2px;font-weight:600}
+
+.hide{display:none}
+.err{background:#450a0a80;border:1px solid #ef444433;border-radius:12px;padding:10px;margin-top:10px;font-size:12px;color:#fca5a5}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeIn .3s ease}
 </style>
 </head>
 <body>
-
-<div class="hdr">
-  <h1>⚡ HFS RIPPLE CHECK</h1>
-  <p>Paste addresses → see results → download CSV</p>
-</div>
+<div class="hdr"><h1>⚡ HFS FIELD TOOL</h1><p>Lead Scoring • Pitch Generator • Walk Optimizer • Revenue Tracker</p></div>
 
 <div id="v-input">
-  <textarea id="input" placeholder="One address per line:&#10;1515 Laggan Ln Indian Trail NC 28079&#10;1303 Tollcross Rd Indian Trail NC 28079&#10;&#10;Or with owner:&#10;SMITH JOHN|123 Main St Statesville NC 28677"></textarea>
-  <button class="btn btn-blue" onclick="parseAddresses()">PARSE ADDRESSES</button>
+<textarea id="input" placeholder="Paste addresses:&#10;SMITH JOHN|1515 Laggan Ln Indian Trail NC 28079&#10;JONES MARY|514 Western Ave Statesville NC 28677&#10;&#10;Or just addresses:&#10;1515 Laggan Ln Indian Trail NC 28079"></textarea>
+<button class="btn btn-blue" onclick="parseAddresses()">⚡ PARSE ADDRESSES</button>
 </div>
 
 <div id="v-parsed" class="hide">
-  <div class="card">
-    <div style="font-size:14px;font-weight:800" id="parse-count"></div>
-    <div id="parse-list" style="max-height:180px;overflow:auto;margin-top:6px;font-size:11px"></div>
-  </div>
-  <button class="btn btn-green" onclick="runCheck()">🔍 CHECK ALL</button>
-  <button class="btn btn-dark" onclick="showView('v-input')">← Back</button>
+<div class="card"><div style="font-size:14px;font-weight:800" id="parse-count"></div><div id="parse-list" style="max-height:160px;overflow:auto;margin-top:8px;font-size:11px"></div></div>
+<button class="btn btn-green" onclick="runCheck()">🔍 CHECK ALL</button>
+<button class="btn btn-dark" onclick="showView('v-input')">← Edit</button>
 </div>
 
 <div id="v-running" class="hide">
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;font-size:12px">
-      <span id="run-addr" style="font-weight:700"></span>
-      <span id="run-count" style="color:#3b82f6;font-weight:800"></span>
-    </div>
-    <div class="prog"><div class="prog-bar" id="run-bar"></div></div>
-    <div id="run-eta" style="font-size:10px;color:#444"></div>
-  </div>
-  <div class="stats" id="run-stats"></div>
-  <div id="run-err" class="err hide"></div>
-  <button class="btn btn-red" onclick="stopCheck()">⏹ STOP & VIEW RESULTS</button>
+<div class="card"><div style="display:flex;justify-content:space-between"><span id="run-addr" style="font-weight:700;font-size:12px"></span><span id="run-count" style="color:var(--blue);font-weight:800;font-family:var(--mono)"></span></div><div class="prog"><div class="prog-bar" id="run-bar"></div></div><div id="run-eta" style="font-size:10px;color:#334155;font-family:var(--mono)"></div></div>
+<div class="stats" id="run-stats"></div>
+<div id="run-err" class="err hide"></div>
+<button class="btn btn-red" onclick="stopCheck()">⏹ STOP & VIEW</button>
 </div>
 
 <div id="v-results" class="hide">
-  <div class="stats" id="res-stats"></div>
-  <div class="pct" id="res-pct"></div>
-  <div class="sort-bar">
-    <span style="color:#555;font-size:11px;padding:6px 0">Sort:</span>
-    <button class="sort-btn active" onclick="sortBy('street')" id="sb-street">Street</button>
-    <button class="sort-btn" onclick="sortBy('num')" id="sb-num">House #</button>
-    <button class="sort-btn" onclick="sortBy('status')" id="sb-status">Status</button>
-    <button class="sort-btn" onclick="sortBy('date')" id="sb-date">Newest</button>
-  </div>
-  <div class="tbl-wrap">
-    <table>
-      <thead><tr><th>#</th><th>Street</th><th>Owner</th><th>Ripple</th><th>Fiber</th><th>Connected</th><th>Created</th></tr></thead>
-      <tbody id="res-tbody"></tbody>
-    </table>
-  </div>
-  <button class="btn btn-blue" onclick="downloadCSV()" style="margin-top:12px">⬇️ DOWNLOAD CSV</button>
-  <button class="btn btn-dark" onclick="resetAll()">🔄 NEW CHECK</button>
+<div class="stats" id="res-stats"></div>
+<div class="pct-bar"><span style="font-size:10px;color:var(--muted);font-weight:600">PENETRATION</span><div class="pct-fill"><div id="pct-fill-bar"></div></div><span class="pct-text" id="pct-text"></span></div>
+<div class="tabs">
+<button class="tab active" onclick="setTab('table')" id="tab-table">📋 Table</button>
+<button class="tab" onclick="setTab('insights')" id="tab-insights">🧠 Insights</button>
+<button class="tab" onclick="setTab('streets')" id="tab-streets">📍 Streets</button>
+<button class="tab" onclick="setTab('money')" id="tab-money">💰 Revenue</button>
+</div>
+
+<div id="p-table">
+<input class="search" id="search-box" placeholder="🔍 Search owner, street..." oninput="renderTable()">
+<div class="filter-bar">
+<button class="fil active" onclick="setFilter('all')" id="f-all">All</button>
+<button class="fil" onclick="setFilter('hot')" id="f-hot">🔥 Hot</button>
+<button class="fil" onclick="setFilter('knock')" id="f-knock">🚪 Knock</button>
+<button class="fil" onclick="setFilter('skip')" id="f-skip">✅ Skip</button>
+</div>
+<div class="filter-bar">
+<button class="fil active" onclick="sortBy('score')" id="sb-score">🎯 Score</button>
+<button class="fil" onclick="sortBy('street')" id="sb-street">Street</button>
+<button class="fil" onclick="sortBy('walk')" id="sb-walk">🚶 Walk</button>
+<button class="fil" onclick="sortBy('date')" id="sb-date">Newest</button>
+</div>
+<div style="font-size:10px;color:var(--muted);margin-top:6px">👆 Tap any row to see your pitch script</div>
+<div class="tbl-wrap">
+<table><thead><tr><th>⬆</th><th>#</th><th>Street</th><th>Owner</th><th>Status</th><th>Created</th></tr></thead><tbody id="res-tbody"></tbody></table>
+</div>
+</div>
+<div id="p-insights" class="hide"></div>
+<div id="p-streets" class="hide"></div>
+<div id="p-money" class="hide"></div>
+
+<button class="btn btn-blue" onclick="downloadCSV()" style="margin-top:14px">⬇️ DOWNLOAD CSV</button>
+<button class="btn btn-dark" onclick="printKnock()">🖨️ PRINT KNOCK SHEET</button>
+<button class="btn btn-dark" onclick="resetAll()">🔄 NEW CHECK</button>
 </div>
 
 <script>
 const API="https://ripple-api.spitfireinbound.com/api";
-let homes=[],results=[],stopped=false,currentSort="street";
+let homes=[],results=[],stopped=false,currentSort="score",currentFilter="all",currentTab="table",openPitch=null;
 function $(id){return document.getElementById(id)}
 function showView(id){["v-input","v-parsed","v-running","v-results"].forEach(v=>$(v).classList.toggle("hide",v!==id))}
 function wait(ms){return new Promise(r=>setTimeout(r,ms))}
 async function apiFetch(url){try{const r=await fetch(url);if(r.ok)return await r.json();if(r.status===429){await wait(20000);return null}}catch(e){}return null}
 
-function parseAddresses(){
-  const raw=$("input").value.trim();if(!raw)return;
-  const lines=raw.split("\n").map(l=>l.trim()).filter(Boolean);
-  homes=[];const seen=new Set();
-  for(const line of lines){
-    let owner="",addr="";
-    if(line.includes("|")){[owner,addr]=line.split("|").map(s=>s.trim())}
-    else{const m=line.match(/^(\d+\s+.+)/);if(m)addr=m[1].trim()}
-    if(!addr)continue;
-    const num=addr.match(/^\d+/)?.[0];
-    if(!num||seen.has(num+addr.slice(num.length,num.length+20)))continue;
-    seen.add(num+addr.slice(num.length,num.length+20));
-    if(!addr.match(/\d{5}/)&&!addr.match(/NC/i))addr+=" NC";
-    homes.push({owner,address:addr});
-  }
-  if(!homes.length)return alert("No addresses found");
-  $("parse-count").textContent="✅ "+homes.length+" addresses ready";
-  $("parse-list").innerHTML=homes.map(h=>{
-    const num=h.address.match(/^\d+/)?.[0]||"";
-    return '<div style="padding:3px 0;border-bottom:1px solid #1a1a1a"><span style="color:#3b82f6;font-weight:700">'+num+'</span> <span style="color:#888">'+h.address.replace(/^\d+\s*/,"").slice(0,40)+'</span>'+(h.owner?' <span style="color:#555;font-size:10px">— '+h.owner.slice(0,20)+'</span>':'')+'</div>';
-  }).join("");
-  showView("v-parsed");
+function ownerType(n){if(!n)return"unknown";const u=n.toUpperCase();if(/LLC|LP\b|INC\b|CORP|PROPERTIES|HOLDINGS|INVESTMENTS|BORROWER|PROPCO|SCATTERED|RENTAL|MORTGAGE|BANK|FEDERAL|NATIONAL/.test(u))return"investor";if(/HEIRS|ESTATE|EST\b/.test(u))return"estate";if(/TRUST/.test(u))return"trust";return"homeowner"}
+
+function firstName(owner){
+if(!owner)return"neighbor";
+const parts=owner.split(/[,&]/)[0].trim().split(/\s+/);
+if(parts.length>=2){
+  const last=parts[0],first=parts[1];
+  return first.charAt(0)+first.slice(1).toLowerCase();
+}
+return parts[0].charAt(0)+parts[0].slice(1).toLowerCase();
 }
 
-function renderStats(target,cn,kn,ni){
-  $(target).innerHTML='<div class="stat s-grn"><div class="num">'+cn+'</div><div class="lbl">CONNECTED</div></div><div class="stat s-red"><div class="num">'+kn+'</div><div class="lbl">KNOCK</div></div><div class="stat s-gry"><div class="num">'+ni+'</div><div class="lbl">NOT IN RIPPLE</div></div>';
+function scoreAddress(r){
+if(r.connected)return{score:0,label:"SKIP",reason:"Already customer",priority:4};
+if(!r.inRipple)return{score:0,label:"N/A",reason:"Not in footprint",priority:5};
+let score=50,reasons=[];
+if(r.fiber){score+=20;reasons.push("Fiber live")}else{score-=30;reasons.push("No fiber")}
+const ot=ownerType(r.owner);
+if(ot==="homeowner"){score+=15;reasons.push("Homeowner")}else if(ot==="investor"){score-=10;reasons.push("Investor")}
+if(r.date){const days=Math.floor((Date.now()-new Date(r.date).getTime())/864e5);
+if(days<90){score+=20;reasons.push("New <90d")}else if(days<180){score+=10;reasons.push("<6mo")}else if(days<365){score+=5;reasons.push("<1yr")}}
+const ss=results.filter(x=>x.street===r.street);
+const cp=ss.length>0?ss.filter(x=>x.connected).length/ss.length:0;
+if(cp>.3){score+=10;reasons.push(Math.round(cp*100)+"%nbr")}
+score=Math.max(0,Math.min(100,score));
+return{score,label:score>=75?"🔥 HOT":score>=50?"KNOCK":"LOW",reason:reasons.join(" • "),priority:score>=75?1:score>=50?2:3}}
+
+// --- PITCH GENERATOR ---
+function generatePitch(r){
+if(r.connected)return{pitch:"Already a Ripple customer. Skip this door.",type:"skip"};
+if(!r.inRipple)return{pitch:"Not in Ripple's footprint yet. Sell AT&T/Spectrum instead or come back when fiber is built.",type:"na"};
+
+const name=firstName(r.owner);
+const sameStreet=results.filter(x=>x.street===r.street&&x.connected);
+const nearby=sameStreet.sort((a,b)=>Math.abs(a.num-r.num)-Math.abs(b.num-r.num)).slice(0,3);
+const days=r.date?Math.floor((Date.now()-new Date(r.date).getTime())/864e5):999;
+const ot=ownerType(r.owner);
+
+let pitch="",type="knock";
+
+if(nearby.length>=2){
+  // Multiple neighbors connected
+  const n1=firstName(nearby[0].owner);
+  const n2=firstName(nearby[1].owner);
+  pitch=`"Hey ${name}, I was just over at ${n1}'s place at ${nearby[0].num} and ${n2}'s at ${nearby[1].num} — they both got activated on Ripple fiber. 2 gig symmetrical for less than what Spectrum charges. Your street's already lit up, just wanted to make sure you didn't miss out."`;
+  type="hot";
+} else if(nearby.length===1){
+  // One neighbor connected
+  const n1=firstName(nearby[0].owner);
+  pitch=`"Hey ${name}, your neighbor ${n1} at ${nearby[0].num} just got activated on Ripple fiber — 2 gig speeds. They finished running the line on your street. Have you had a chance to check it out yet?"`;
+  type="hot";
+} else if(days<180){
+  // New mover, no neighbors connected
+  pitch=`"Hey ${name}, welcome to the neighborhood! I saw they just finished running fiber on your street. You're one of the first to get access — 2 gig Ripple fiber. Most new homeowners are switching from Spectrum. Want me to show you the plans?"`;
+  type="new";
+} else if(ot==="investor"){
+  pitch=`"Hi, I'm reaching out about ${r.num} ${r.street}. Ripple just activated fiber on this street — tenants love it, and it's a selling point for your property. 2 gig speeds, no contract. Can I send you the details?"`;
+  type="investor";
+} else if(!r.fiber){
+  pitch=`"Hey ${name}, just a heads up — Ripple is building out fiber in your area. Your street is in the next phase. I can put you on the priority list so you're first to get connected when it goes live. Want me to add you?"`;
+  type="future";
+} else {
+  // Fiber available, no neighbors connected yet
+  pitch=`"Hey ${name}, they just finished running Ripple fiber on your street — 2 gig speeds, faster than anything Spectrum or AT&T can do. You're one of the first on ${r.street} to get access. Want me to walk you through the plans?"`;
+  type="knock";
 }
+
+// Add Vivint stack for new movers
+let stack="";
+if(days<180&&ot==="homeowner"){
+  stack=`\n\n🏠 VIVINT STACK: "By the way, since you just moved in — are you set up on home security yet? I can get you a Vivint system with the internet bundle."`;
+}
+
+return{pitch,type,stack};
+}
+
+function parseAddresses(){
+const raw=$("input").value.trim();if(!raw)return;
+const lines=raw.split("\n").map(l=>l.trim()).filter(Boolean);
+homes=[];const seen=new Set();
+for(const line of lines){let owner="",addr="";
+if(line.includes("|")){[owner,addr]=line.split("|").map(s=>s.trim())}
+else{const m=line.match(/^(\d+\s+.+)/);if(m)addr=m[1].trim()}
+if(!addr)continue;const num=addr.match(/^\d+/)?.[0];
+if(!num||seen.has(num+addr.slice(num.length,num.length+20)))continue;
+seen.add(num+addr.slice(num.length,num.length+20));
+if(!addr.match(/\d{5}/)&&!addr.match(/NC/i))addr+=" NC";
+homes.push({owner,address:addr})}
+if(!homes.length)return alert("No addresses found");
+$("parse-count").textContent="✅ "+homes.length+" addresses";
+$("parse-list").innerHTML=homes.map(h=>{const num=h.address.match(/^\d+/)?.[0]||"";
+return'<div style="padding:3px 0;border-bottom:1px solid #111827;display:flex;gap:6px"><span style="color:var(--blue);font-weight:800;font-family:var(--mono);width:40px">'+num+'</span><span style="color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">'+h.address.replace(/^\d+\s*/,"").slice(0,35)+'</span><span style="color:#666;font-size:10px">'+firstName(h.owner)+'</span></div>'}).join("");
+showView("v-parsed")}
+
+function renderStats(target,cn,kn,ni,hot){
+$(target).innerHTML='<div class="stat s-grn"><div class="num">'+cn+'</div><div class="lbl">Connected</div></div><div class="stat s-org"><div class="num">'+(hot||0)+'</div><div class="lbl">🔥 Hot</div></div><div class="stat s-red"><div class="num">'+kn+'</div><div class="lbl">Knock</div></div><div class="stat s-gry"><div class="num">'+ni+'</div><div class="lbl">No Ripple</div></div>'}
+
+function setTab(t){currentTab=t;["table","insights","streets","money"].forEach(p=>{$("p-"+p).classList.toggle("hide",p!==t);$("tab-"+p).classList.toggle("active",p===t)});
+if(t==="insights")renderInsights();if(t==="streets")renderStreets();if(t==="money")renderMoney()}
+
+function setFilter(f){currentFilter=f;document.querySelectorAll("#v-results .filter-bar:first-of-type .fil").forEach(b=>b.classList.remove("active"));$("f-"+f)?.classList.add("active");renderTable()}
+function sortBy(k){currentSort=k;document.querySelectorAll("#v-results .filter-bar:nth-of-type(2) .fil").forEach(b=>b.classList.remove("active"));$("sb-"+k)?.classList.add("active");renderTable()}
+
+function togglePitch(idx){
+document.querySelectorAll(".pitch-row").forEach(r=>r.classList.remove("show"));
+if(openPitch===idx){openPitch=null;return}
+openPitch=idx;
+const el=document.getElementById("pitch-"+idx);
+if(el)el.classList.add("show");
+}
+
+function getFiltered(){
+const q=($("search-box")?.value||"").toLowerCase();
+return results.filter(r=>{
+const s=scoreAddress(r);
+if(currentFilter==="hot"&&s.score<75)return false;
+if(currentFilter==="knock"&&(!r.inRipple||r.connected))return false;
+if(currentFilter==="skip"&&!r.connected)return false;
+if(q&&!(r.owner||"").toLowerCase().includes(q)&&!r.street.toLowerCase().includes(q))return false;
+return true})}
 
 function renderTable(){
-  const sorted=[...results];
-  if(currentSort==="street")sorted.sort((a,b)=>a.street.localeCompare(b.street)||a.num-b.num);
-  else if(currentSort==="num")sorted.sort((a,b)=>a.num-b.num);
-  else if(currentSort==="status")sorted.sort((a,b)=>(a.connected?0:a.inRipple?1:2)-(b.connected?0:b.inRipple?1:2)||a.street.localeCompare(b.street));
-  else if(currentSort==="date")sorted.sort((a,b)=>(b.date||"0").localeCompare(a.date||"0"));
+const f=getFiltered(),sorted=[...f];
+if(currentSort==="score")sorted.sort((a,b)=>scoreAddress(a).priority-scoreAddress(b).priority||scoreAddress(b).score-scoreAddress(a).score);
+else if(currentSort==="street")sorted.sort((a,b)=>a.street.localeCompare(b.street)||a.num-b.num);
+else if(currentSort==="date")sorted.sort((a,b)=>(b.date||"0").localeCompare(a.date||"0"));
+else if(currentSort==="walk")sorted.sort((a,b)=>a.street!==b.street?a.street.localeCompare(b.street):a.num%2!==b.num%2?(b.num%2)-(a.num%2):a.num-b.num);
 
-  $("res-tbody").innerHTML=sorted.map(r=>{
-    const cls=r.connected?"row-conn":r.inRipple?"row-knock":"row-na";
-    const rip=r.inRipple?'<span class="tag tag-yes">YES</span>':'<span class="tag tag-na">NO</span>';
-    const fib=r.fiber?'<span class="tag tag-yes">YES</span>':r.inRipple?'<span class="tag tag-no">NO</span>':'<span class="tag tag-na">—</span>';
-    const con=r.connected?'<span class="tag tag-yes">SKIP ✓</span>':r.inRipple?'<span class="tag tag-no">KNOCK</span>':'<span class="tag tag-na">—</span>';
-    return '<tr class="'+cls+'"><td class="t-num">'+r.num+'</td><td class="t-street">'+r.street+'</td><td class="t-owner" title="'+r.owner+'">'+(r.owner?.slice(0,22)||"—")+'</td><td>'+rip+'</td><td>'+fib+'</td><td>'+con+'</td><td class="t-date">'+(r.date||"—")+'</td></tr>';
-  }).join("");
-}
+let html="";
+sorted.forEach((r,i)=>{
+const s=scoreAddress(r);const p=generatePitch(r);
+const cls=r.connected?"row-conn":s.score>=75?"row-hot":r.inRipple?"row-knock":"row-na";
+const sc=s.score>=75?"sc-hi":s.score>=50?"sc-md":s.score>0?"sc-lo":"sc-no";
+const con=r.connected?'<span class="tag tag-skip">SKIP ✓</span>':s.score>=75?'<span class="tag tag-hot">🔥 HOT</span>':r.inRipple?'<span class="tag tag-knock">KNOCK</span>':'<span class="tag tag-na">—</span>';
+const side=r.num%2?"L":"R";
 
-function sortBy(key){
-  currentSort=key;
-  document.querySelectorAll(".sort-btn").forEach(b=>b.classList.remove("active"));
-  $("sb-"+key).classList.add("active");
-  renderTable();
-}
+html+='<tr class="'+cls+'" onclick="togglePitch('+i+')" style="cursor:pointer" title="Tap for pitch"><td><span class="score '+sc+'">'+s.score+'</span></td><td class="t-num">'+r.num+'</td><td class="t-street">'+r.street+'<span class="walk-badge">'+side+'</span></td><td class="t-owner">'+(r.owner||"—").slice(0,22)+'</td><td>'+con+'</td><td class="t-date">'+(r.date||"—")+'</td></tr>';
+
+// Pitch row (hidden by default)
+const pitchColor=p.type==="hot"?"#f97316":p.type==="new"?"#60a5fa":p.type==="skip"?"#22c55e":p.type==="investor"?"#a78bfa":"#94a3b8";
+html+='<tr class="pitch-row" id="pitch-'+i+'"><td colspan="6" class="pitch-cell"><div class="pitch-label" style="color:'+pitchColor+'">🎤 YOUR PITCH — '+p.type.toUpperCase()+'</div><div class="pitch-text">'+p.pitch+'</div>';
+if(p.stack)html+='<div style="margin-top:6px;padding:6px 8px;background:#1a103380;border-radius:6px;border-left:2px solid var(--purple);font-size:11px">'+p.stack+'</div>';
+html+='<button class="pitch-copy" onclick="event.stopPropagation();navigator.clipboard.writeText(\''+p.pitch.replace(/'/g,"\\'")+'\');this.textContent=\'✅ Copied!\'">📋 Copy Pitch</button></td></tr>';
+});
+$("res-tbody").innerHTML=html;openPitch=null}
+
+function renderInsights(){
+const knock=results.filter(r=>r.inRipple&&!r.connected),conn=results.filter(r=>r.connected);
+const hot=results.filter(r=>scoreAddress(r).score>=75);
+const newM=results.filter(r=>{if(!r.date||!r.inRipple||r.connected)return false;return(Date.now()-new Date(r.date).getTime())/864e5<180});
+const ho=knock.filter(r=>ownerType(r.owner)==="homeowner"),inv=knock.filter(r=>ownerType(r.owner)==="investor");
+const streets={};results.filter(r=>r.inRipple).forEach(r=>{if(!streets[r.street])streets[r.street]={t:0,c:0};streets[r.street].t++;if(r.connected)streets[r.street].c++});
+let bestSt="",bestPct=100;for(const[st,d]of Object.entries(streets)){const p=d.t>3?d.c/d.t*100:100;if(p<bestPct){bestPct=p;bestSt=st}}
+
+let h='<div class="insight fade-in"><h3>🧠 Territory Analysis</h3><div class="insight-grid">';
+h+='<div class="insight-card"><div class="ic-num" style="color:#fb923c">'+hot.length+'</div><div class="ic-lbl">Hot Leads</div></div>';
+h+='<div class="insight-card"><div class="ic-num" style="color:#60a5fa">'+newM.length+'</div><div class="ic-lbl">New Movers</div></div>';
+h+='<div class="insight-card"><div class="ic-num" style="color:#4ade80">'+ho.length+'</div><div class="ic-lbl">Homeowners</div></div>';
+h+='<div class="insight-card"><div class="ic-num" style="color:#f87171">'+inv.length+'</div><div class="ic-lbl">Investors</div></div></div>';
+if(hot.length)h+='<div class="tip">🔥 <b>'+hot.length+' hot leads</b> — fiber live, homeowners, neighbors connected. Hit first.</div>';
+if(newM.length)h+='<div class="tip">🏠 <b>'+newM.length+' new movers</b> — stack Ripple + Vivint on same door.</div>';
+if(bestSt&&bestPct<15)h+='<div class="tip">📍 <b>'+bestSt+'</b> = '+Math.round(bestPct)+'% penetration. Untouched.</div>';
+h+='</div>';$("p-insights").innerHTML=h}
+
+function renderStreets(){
+const streets={};results.filter(r=>r.inRipple).forEach(r=>{if(!streets[r.street])streets[r.street]={t:0,c:0,hot:0};streets[r.street].t++;if(r.connected)streets[r.street].c++;if(scoreAddress(r).score>=75)streets[r.street].hot++});
+const sorted=Object.entries(streets).sort((a,b)=>(a[1].c/a[1].t)-(b[1].c/b[1].t));
+let h='<div class="card fade-in"><h3 style="font-size:14px;margin-bottom:10px">📍 Streets</h3>';
+sorted.forEach(([st,d])=>{const p=Math.round(d.c/d.t*100);const c=p<15?"#22c55e":p<40?"#eab308":"#ef4444";
+h+='<div class="street-card"><div class="street-name">'+st+'</div><div class="street-bar"><div style="width:'+p+'%;background:'+c+'"></div></div><div class="street-nums">'+d.c+'/'+d.t+' ('+p+'%)'+(d.hot?' 🔥'+d.hot:'')+'</div></div>'});
+h+='</div>';$("p-streets").innerHTML=h}
+
+function renderMoney(){
+const knock=results.filter(r=>r.inRipple&&!r.connected).length;
+const hot=results.filter(r=>scoreAddress(r).score>=75).length;
+const newM=results.filter(r=>{if(!r.date||!r.inRipple||r.connected)return false;return(Date.now()-new Date(r.date).getTime())/864e5<180}).length;
+const rc=80,vc=250,hc=.15,kc=.08;
+const rr=Math.round(hot*hc*rc+(knock-hot)*kc*rc);const vr=Math.round(newM*.12*vc);
+let h='<div class="comm fade-in"><h3>💰 Revenue Projections</h3><div class="comm-grid">';
+h+='<div class="comm-item"><div class="cm-num">$'+rr+'</div><div class="cm-lbl">Ripple</div></div>';
+h+='<div class="comm-item"><div class="cm-num">$'+vr+'</div><div class="cm-lbl">Vivint</div></div>';
+h+='<div class="comm-item"><div class="cm-num" style="font-size:22px">$'+(rr+vr)+'</div><div class="cm-lbl">Total</div></div></div>';
+h+='<div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.6">';
+h+='🔥 '+hot+' hot × '+Math.round(hc*100)+'% = '+Math.round(hot*hc)+' Ripple sales<br>';
+h+='🚪 '+(knock-hot)+' cold × '+Math.round(kc*100)+'% = '+Math.round((knock-hot)*kc)+' Ripple sales<br>';
+h+='🏠 '+newM+' movers × 12% = '+Math.round(newM*.12)+' Vivint sales</div></div>';
+$("p-money").innerHTML=h}
 
 async function runCheck(){
-  showView("v-running");stopped=false;results=[];
-  const aC={},sC={};
-  for(let i=0;i<homes.length;i++){
-    if(stopped)break;
-    const h=homes[i];
-    const num=h.address.match(/^\d+/)?.[0]||"";
-    const stM=h.address.match(/\d+\s+(.+?)(?:\s+(?:Statesville|Monroe|Indian Trail|Carthage|Whispering|High Point|NC|28\d))/i);
-    const street=stM?stM[1].trim():h.address.replace(/^\d+\s*/,"").split(/\s+NC/i)[0].trim();
-    const kw=street.split(" ")[0].toLowerCase();
-    $("run-addr").textContent=num+" "+street;
-    $("run-count").textContent=(i+1)+"/"+homes.length;
-    $("run-bar").style.width=((i+1)/homes.length*100)+"%";
-    $("run-eta").textContent="~"+Math.max(1,Math.round((homes.length-i)*8/60))+" min left";
-    try{
-      if(!sC[kw]){sC[kw]=await apiFetch(API+"/predefined-premises?address="+encodeURIComponent(h.address)+"&service_provider=ripple");await wait(5000)}
-      const arr=sC[kw]?.addressArray||[];
-      const match=arr.find(a=>(a.full_text.startsWith(num+",")||a.full_text.startsWith(num+" "))&&a.full_text.toLowerCase().includes(kw));
-      if(!match){results.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:""})}
-      else{
-        const aid=match.area_id||"";
-        if(aid&&!aC[aid]){await wait(3000);aC[aid]=await apiFetch(API+"/area-has-fiber?areaId="+aid+"&service_provider=ripple")}
-        const fiber=aC[aid]?.areaHasFiber==="Connected";
-        let connected=false;
-        if(match.premise_id){await wait(3000);const sd=await apiFetch(API+"/query-existing-service?premiseGuid="+match.premise_id+"&service_provider=ripple");if(sd?.premiseHasService)connected=true}
-        results.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:true,fiber,connected,date:match.created_at?.slice(0,10)||""})
-      }
-    }catch(e){
-      $("run-err").textContent="❌ "+e.message;$("run-err").classList.remove("hide");
-      results.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:""})
-    }
-    const cn=results.filter(r=>r.connected).length;
-    const kn=results.filter(r=>r.inRipple&&!r.connected).length;
-    const ni=results.filter(r=>!r.inRipple).length;
-    renderStats("run-stats",cn,kn,ni);
-  }
-  showResults();
-}
+showView("v-running");stopped=false;results=[];const aC={},sC={};
+for(let i=0;i<homes.length;i++){if(stopped)break;
+const h=homes[i],num=h.address.match(/^\d+/)?.[0]||"";
+const stM=h.address.match(/\d+\s+(.+?)(?:\s+(?:Statesville|Monroe|Indian Trail|Carthage|Whispering|High Point|NC|28\d))/i);
+const street=stM?stM[1].trim():h.address.replace(/^\d+\s*/,"").split(/\s+NC/i)[0].trim();
+const kw=street.split(" ")[0].toLowerCase();
+$("run-addr").textContent=num+" "+street;$("run-count").textContent=(i+1)+"/"+homes.length;
+$("run-bar").style.width=((i+1)/homes.length*100)+"%";
+$("run-eta").textContent="~"+Math.max(1,Math.round((homes.length-i)*8/60))+"m";
+try{if(!sC[kw]){sC[kw]=await apiFetch(API+"/predefined-premises?address="+encodeURIComponent(h.address)+"&service_provider=ripple");await wait(5000)}
+const arr=sC[kw]?.addressArray||[];const match=arr.find(a=>(a.full_text.startsWith(num+",")||a.full_text.startsWith(num+" "))&&a.full_text.toLowerCase().includes(kw));
+if(!match){results.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:""})}
+else{const aid=match.area_id||"";if(aid&&!aC[aid]){await wait(3000);aC[aid]=await apiFetch(API+"/area-has-fiber?areaId="+aid+"&service_provider=ripple")}
+const fiber=aC[aid]?.areaHasFiber==="Connected";let connected=false;
+if(match.premise_id){await wait(3000);const sd=await apiFetch(API+"/query-existing-service?premiseGuid="+match.premise_id+"&service_provider=ripple");if(sd?.premiseHasService)connected=true}
+results.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:true,fiber,connected,date:match.created_at?.slice(0,10)||""})}}
+catch(e){$("run-err").textContent="❌ "+e.message;$("run-err").classList.remove("hide");
+results.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:""})}
+const cn=results.filter(r=>r.connected).length,kn=results.filter(r=>r.inRipple&&!r.connected).length,ni=results.filter(r=>!r.inRipple).length,ht=results.filter(r=>scoreAddress(r).score>=75).length;
+renderStats("run-stats",cn,kn,ni,ht)}
+showResults()}
 
 function stopCheck(){stopped=true;showResults()}
 
-function showResults(){
-  showView("v-results");
-  const cn=results.filter(r=>r.connected).length;
-  const kn=results.filter(r=>r.inRipple&&!r.connected).length;
-  const ni=results.filter(r=>!r.inRipple).length;
-  renderStats("res-stats",cn,kn,ni);
-  $("res-pct").textContent=cn+kn>0?"📊 "+Math.round(cn/(cn+kn)*100)+"% Penetration":"";
-  renderTable();
-}
+function showResults(){showView("v-results");
+const cn=results.filter(r=>r.connected).length,kn=results.filter(r=>r.inRipple&&!r.connected).length,ni=results.filter(r=>!r.inRipple).length,ht=results.filter(r=>scoreAddress(r).score>=75).length;
+renderStats("res-stats",cn,kn,ni,ht);
+const pct=cn+kn>0?Math.round(cn/(cn+kn)*100):0;
+$("pct-fill-bar").style.width=pct+"%";$("pct-text").textContent=pct+"%";$("pct-text").style.color=pct<15?"#4ade80":pct<40?"#eab308":"#ef4444";
+setTab("table");renderTable()}
 
 function downloadCSV(){
-  const sorted=[...results].sort((a,b)=>a.street.localeCompare(b.street)||a.num-b.num);
-  let csv="House Number,Street,Address,Owner,In Ripple,Fiber,Connected,Created\n";
-  csv+=sorted.map(r=>r.num+',"'+r.street+'","'+r.address+'","'+r.owner+'",'+(r.inRipple?"YES":"NO")+","+(r.fiber?"YES":"NO")+","+(r.connected?"YES":"NO")+","+r.date).join("\n");
-  const blob=new Blob([csv],{type:"text/csv"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
-  a.download="Ripple_"+new Date().toISOString().slice(0,10)+".csv";a.click();
-}
+const sorted=[...results].sort((a,b)=>scoreAddress(b).score-scoreAddress(a).score);
+let csv="Score,House,Street,Address,Owner,Type,Fiber,Connected,Created,Pitch\n";
+csv+=sorted.map(r=>{const s=scoreAddress(r);const p=generatePitch(r);
+return s.score+','+r.num+',"'+r.street+'","'+r.address+'","'+(r.owner||"")+'",'+ownerType(r.owner)+','+(r.fiber?"YES":"NO")+','+(r.connected?"YES":"NO")+','+r.date+',"'+p.pitch.replace(/"/g,'""')+'"'}).join("\n");
+const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="HFS_Ripple_"+new Date().toISOString().slice(0,10)+".csv";a.click()}
 
-function resetAll(){homes=[];results=[];$("input").value="";showView("v-input")}
+function printKnock(){
+const knock=results.filter(r=>r.inRipple&&!r.connected).sort((a,b)=>scoreAddress(b).score-scoreAddress(a).score);
+let h='<html><head><style>body{font-family:Arial;font-size:11px;margin:20px}h1{font-size:16px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}th{background:#222;color:#fff;font-size:9px}.hot{background:#fff3cd}.pitch{font-size:10px;color:#555;font-style:italic;max-width:300px;word-wrap:break-word}</style></head><body>';
+h+='<h1>🚪 HFS KNOCK LIST — '+new Date().toLocaleDateString()+'</h1><p>'+knock.length+' doors</p>';
+h+='<table><tr><th>Score</th><th>#</th><th>Street</th><th>Owner</th><th>Pitch</th></tr>';
+knock.forEach(r=>{const s=scoreAddress(r);const p=generatePitch(r);
+h+='<tr class="'+(s.score>=75?"hot":"")+'"><td>'+s.score+'</td><td>'+r.num+'</td><td>'+r.street+'</td><td>'+(r.owner||"—")+'</td><td class="pitch">'+p.pitch+'</td></tr>'});
+h+='</table></body></html>';const w=window.open();w.document.write(h);w.document.close();w.print()}
+
+function resetAll(){homes=[];results=[];$("input").value="";currentSort="score";currentFilter="all";openPitch=null;showView("v-input")}
 </script>
 </body>
 </html>
