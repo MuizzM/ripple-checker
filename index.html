@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#050508">
+<title>Ripple Field Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050508;--c1:#0d0d12;--c2:#16161d;--c3:#1e1e28;--b1:#2a2a38;--t1:#f0f0f5;--t2:#9898a8;--t3:#58586a;--blue:#4d8df7;--green:#2dd4a0;--red:#f76d6d;--amber:#f7c948;--purple:#b07df7;--teal:#38bdf8;--r:16px;--font:'Inter',-apple-system,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--t1);-webkit-font-smoothing:antialiased;min-height:100vh}
+.app{max-width:560px;margin:0 auto;padding:0 20px 120px}
+
+/* Header */
+.hdr{padding:28px 0 8px;display:flex;align-items:center;gap:12px}
+.hdr img{height:22px;filter:brightness(1.5)}
+.hdr-line{width:1px;height:18px;background:var(--b1)}
+.hdr-txt{font-size:13px;color:var(--t3);font-weight:600;letter-spacing:.8px}
+
+/* Inputs */
+.area{width:100%;min-height:180px;background:var(--c1);border:1px solid var(--c2);border-radius:var(--r);padding:16px;color:var(--t1);font-size:14px;font-family:'SF Mono',monospace;resize:vertical;line-height:1.6;transition:border .2s}
+.area:focus{outline:none;border-color:var(--blue)}
+.area::placeholder{color:var(--t3)}
+
+/* Buttons */
+.btn{display:flex;align-items:center;justify-content:center;width:100%;height:54px;border-radius:14px;border:none;font-family:var(--font);font-weight:700;font-size:16px;cursor:pointer;transition:transform .1s,opacity .1s;letter-spacing:-.3px}
+.btn:active{transform:scale(.98);opacity:.85}
+.btn-main{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff}
+.btn-stop{background:var(--red);color:#fff}
+.btn-ghost{background:var(--c1);border:1px solid var(--c2);color:var(--t2);font-size:14px;height:46px}
+.mt{margin-top:10px}
+
+/* Revenue */
+.rev{background:linear-gradient(135deg,#0a1a15,#0d1520);border:1px solid #1a3a2a;border-radius:var(--r);padding:24px;margin-top:16px}
+.rev-row{display:flex;justify-content:space-between;align-items:flex-end}
+.rev-num{font-size:44px;font-weight:900;color:var(--green);letter-spacing:-3px;line-height:1}
+.rev-lbl{font-size:12px;color:#4a8a6a;margin-top:6px;font-weight:600}
+.rev-r{text-align:right}
+.rev-sold{font-size:15px;color:var(--t2);font-weight:700}
+.rev-proj{font-size:11px;color:var(--t3);margin-top:3px}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.kpi{background:var(--c1);border-radius:14px;padding:18px 10px;text-align:center;border:1px solid var(--c2);transition:border-color .2s}
+.kpi-v{font-size:28px;font-weight:900;letter-spacing:-1px}
+.kpi-l{font-size:10px;color:var(--t3);font-weight:600;margin-top:6px;letter-spacing:.5px}
+.kpi-g .kpi-v{color:var(--green)}.kpi-g{border-color:#1a3a2a}
+.kpi-a .kpi-v{color:var(--amber)}.kpi-a{border-color:#3a3010}
+.kpi-b .kpi-v{color:var(--teal)}.kpi-b{border-color:#103030}
+
+/* Chips */
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chips::-webkit-scrollbar{display:none}
+.chip{height:34px;padding:0 16px;border-radius:17px;border:1px solid var(--c3);background:var(--c1);color:var(--t3);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;white-space:nowrap;transition:all .15s}
+.chip.on{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;border-color:transparent}
+
+/* Search */
+.srch{width:100%;height:46px;background:var(--c1);border:1px solid var(--c2);border-radius:14px;padding:0 18px;color:var(--t1);font-size:14px;font-family:var(--font);margin-top:12px;transition:border .2s}
+.srch:focus{outline:none;border-color:var(--blue)}
+
+/* Cards */
+.cards{margin-top:12px}
+.cd{background:var(--c1);border-radius:var(--r);margin-top:8px;overflow:hidden;border:1px solid var(--c2);transition:border-color .2s}
+.cd:hover{border-color:var(--c3)}
+.cd-hot{border-color:#3a301080}
+.cd-skip{border-color:#1a3a2a80}
+
+/* Card head */
+.cd-h{display:flex;align-items:center;padding:14px 16px;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.cd-h:active{background:var(--c2)}
+
+/* Score */
+.cd-sc{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0}
+.sc-a{background:linear-gradient(135deg,#0a2a18,#103820);color:#4ade80;border:1px solid #22c55e33}
+.sc-b{background:linear-gradient(135deg,#2a1e08,#382a10);color:#fbbf24;border:1px solid #f59e0b33}
+.sc-c{background:linear-gradient(135deg,#2a0a0a,#381010);color:#f87171;border:1px solid #ef444433}
+.sc-z{background:var(--c2);color:var(--t3)}
+
+/* Card body */
+.cd-body{flex:1;min-width:0}
+.cd-r1{display:flex;align-items:baseline;gap:8px}
+.cd-num{font-size:18px;font-weight:800;letter-spacing:-.3px}
+.cd-st{font-size:12px;color:var(--t3);font-weight:500}
+.cd-name{font-size:13px;color:var(--t2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cd-date{display:inline-block;margin-top:3px;font-size:11px;color:var(--teal);font-weight:600;background:#0c2030;padding:2px 8px;border-radius:6px}
+
+/* Tag */
+.cd-tag{flex-shrink:0}
+.tg{height:28px;padding:0 14px;border-radius:14px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;letter-spacing:.3px}
+.tg-hot{background:linear-gradient(135deg,#3a2008,#4a2a10);color:var(--amber)}
+.tg-knock{background:var(--c2);color:var(--t2)}
+.tg-skip{background:linear-gradient(135deg,#0a2a18,#103820);color:var(--green)}
+.tg-na{background:var(--c2);color:var(--t3)}
+
+/* Card bar */
+.cd-bar{display:flex;gap:8px;padding:0 16px 12px;align-items:center}
+.cd-sel{flex:1;height:38px;background:var(--bg);border:1px solid var(--c3);border-radius:10px;color:var(--t2);font-size:13px;font-weight:600;padding:0 12px;font-family:var(--font);-webkit-appearance:none;cursor:pointer;transition:border .2s}
+.cd-sel:focus{outline:none;border-color:var(--blue)}
+.cd-sel.k-sold{border-color:#2dd4a044;color:var(--green)}
+.cd-sel.k-noint{border-color:#f76d6d33;color:var(--red)}
+.cd-sel.k-nothome{color:var(--t3)}
+.cd-sel.k-callback{border-color:#4d8df744;color:var(--blue)}
+.cd-sel.k-later{border-color:#f7c94833;color:var(--amber)}
+.cd-icon{height:38px;width:44px;border-radius:10px;background:var(--bg);border:1px solid var(--c3);display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0;transition:all .15s}
+.cd-icon:active{background:var(--c3)}
+.cd-icon svg{width:18px;height:18px;stroke:var(--t3)}
+
+/* Pitch */
+.cd-pitch{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.cd-pitch.open{max-height:400px}
+.pitch-in{padding:16px;background:linear-gradient(135deg,#0d0a1a,#120d20);border-top:1px solid #2a2040}
+.pitch-lbl{font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.pitch-txt{font-size:14px;line-height:1.8;color:var(--t2)}
+.pitch-btn{height:34px;padding:0 16px;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;transition:opacity .1s}
+.pitch-btn:active{opacity:.7}
+
+/* Progress */
+.prog-c{background:var(--c1);border-radius:var(--r);padding:22px;border:1px solid var(--c2)}
+.prog-row{display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+.prog-track{height:5px;background:var(--c3);border-radius:3px;margin:14px 0 8px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:3px;transition:width .4s}
+.prog-sub{font-size:12px;color:var(--t3);display:flex;justify-content:space-between}
+
+/* Resume */
+.resume{background:linear-gradient(135deg,var(--c1),#12101e);border:1px solid #2a2540;border-radius:var(--r);padding:30px 24px;text-align:center;margin-bottom:16px}
+.resume h3{font-size:18px;font-weight:800}
+.resume p{font-size:13px;color:var(--t3);margin:8px 0 22px}
+.resume-btns{display:flex;gap:10px}
+.resume-btns .btn{flex:1;height:50px}
+
+/* Parsed */
+.pi{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--c2);gap:12px}
+.pi-n{font-size:16px;font-weight:800;color:var(--blue);width:50px;text-align:center}
+.pi-a{font-size:13px;color:var(--t2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Knock pills */
+.kp{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.kp-i{padding:5px 14px;border-radius:10px;font-size:12px;font-weight:600;background:var(--c1);border:1px solid var(--c2);color:var(--t3)}
+
+/* Section */
+.sec{margin-top:22px}
+.sec-lbl{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+
+/* Toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--c2);color:var(--t1);padding:8px 22px;border-radius:22px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99;border:1px solid var(--c3);backdrop-filter:blur(10px)}
+.toast.show{opacity:1}
+
+/* Footer */
+.ftr{position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--c2);z-index:10;backdrop-filter:blur(10px)}
+.ftr-in{max-width:560px;margin:0 auto;display:flex;padding:12px 20px;gap:8px}
+.ftr-in .btn{height:44px;font-size:13px}
+
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="toast" id="toast">Saved</div>
+
+<div id="v-resume" class="resume hide"><h3>Resume session?</h3><p id="resume-info"></p>
+<div class="resume-btns"><button class="btn btn-main" onclick="loadS()">Resume</button><button class="btn btn-ghost" onclick="clearS()">Start fresh</button></div></div>
+
+<div id="v-input">
+<div class="hdr"><img src="https://ripplefiber.com/wp-content/uploads/2023/06/Ripple-Fiber-Logo-1-1.png" alt="" onerror="this.style.display='none'"><div class="hdr-line"></div><span class="hdr-txt">Field Tool</span></div>
+<div class="sec"><div class="sec-lbl">Paste addresses</div>
+<textarea class="area" id="input" placeholder="JOHN SMITH|1515 Laggan Ln Indian Trail NC 28079&#10;1303 Tollcross Rd Indian Trail NC 28079&#10;514 Western Ave Statesville NC 28677"></textarea></div>
+<button class="btn btn-main mt" style="margin-top:16px" onclick="parse()">Continue</button>
+</div>
+
+<div id="v-parsed" class="hide">
+<div class="hdr"><img src="https://ripplefiber.com/wp-content/uploads/2023/06/Ripple-Fiber-Logo-1-1.png" alt="" onerror="this.style.display='none'"><div class="hdr-line"></div><span class="hdr-txt" id="pt"></span></div>
+<div id="pl" style="max-height:280px;overflow:auto"></div>
+<button class="btn btn-main" style="margin-top:20px" onclick="run()">Check all addresses</button>
+<button class="btn btn-ghost mt" onclick="sv('v-input')">Back</button>
+</div>
+
+<div id="v-run" class="hide">
+<div class="hdr"><img src="https://ripplefiber.com/wp-content/uploads/2023/06/Ripple-Fiber-Logo-1-1.png" alt="" onerror="this.style.display='none'"><div class="hdr-line"></div><span class="hdr-txt">Checking</span></div>
+<div class="prog-c" style="margin-top:16px"><div class="prog-row"><span id="ra" style="font-weight:600"></span><span id="rc" style="color:var(--blue);font-weight:800"></span></div>
+<div class="prog-track"><div class="prog-fill" id="rb"></div></div>
+<div class="prog-sub"><span id="re"></span><span>Keep app open</span></div></div>
+<div class="kpis" id="rk"></div>
+<button class="btn btn-stop" style="margin-top:20px" onclick="stopR()">Stop</button>
+</div>
+
+<div id="v-res" class="hide">
+<div class="hdr"><img src="https://ripplefiber.com/wp-content/uploads/2023/06/Ripple-Fiber-Logo-1-1.png" alt="" onerror="this.style.display='none'"><div class="hdr-line"></div><span class="hdr-txt">Results</span></div>
+<div class="rev"><div class="rev-row"><div><div class="rev-num" id="rv-a">$0</div><div class="rev-lbl">Revenue earned</div></div><div class="rev-r"><div class="rev-sold" id="rv-s">0 sold</div><div class="rev-proj" id="rv-p"></div></div></div></div>
+<div class="kpis" id="xk"></div>
+<div class="kp" id="kp"></div>
+<div class="sec"><div class="sec-lbl">Filter</div>
+<div class="chips"><button class="chip on" onclick="fil('all')" id="f-all">All</button><button class="chip" onclick="fil('hot')" id="f-hot">Hot leads</button><button class="chip" onclick="fil('knock')" id="f-knock">To knock</button><button class="chip" onclick="fil('sold')" id="f-sold">Sold</button><button class="chip" onclick="fil('nothome')" id="f-nothome">Not home</button><button class="chip" onclick="fil('callback')" id="f-callback">Callback</button></div></div>
+<div class="sec"><div class="sec-lbl">Sort</div>
+<div class="chips"><button class="chip on" onclick="srt('score')" id="s-score">Best leads</button><button class="chip" onclick="srt('street')" id="s-street">Street</button><button class="chip" onclick="srt('walk')" id="s-walk">Walk route</button><button class="chip" onclick="srt('date')" id="s-date">Newest first</button></div></div>
+<input class="srch" id="q" placeholder="Search owner or street" oninput="render()">
+<div class="cards" id="cards"></div>
+</div>
+</div>
+
+<div class="ftr hide" id="ftr"><div class="ftr-in">
+<button class="btn btn-ghost" style="flex:1" onclick="dlCSV()">Download CSV</button>
+<button class="btn btn-ghost" style="flex:1" onclick="dlPrint()">Print list</button>
+<button class="btn btn-ghost" style="flex:1" onclick="reset()">New check</button>
+</div></div>
+
+<script>
+const A="https://ripple-api.spitfireinbound.com/api",SK="hfs6s",KK="hfs6k";
+let H=[],R=[],stp=false,sm="score",fm="all",op=-1;
+let K={};try{K=JSON.parse(localStorage.getItem(KK)||"{}")}catch(e){}
+const $=id=>document.getElementById(id),W=ms=>new Promise(r=>setTimeout(r,ms));
+async function F(u){try{const r=await fetch(u);if(r.ok)return r.json();if(r.status===429)await W(15000)}catch(e){}return null}
+function sv(id){["v-input","v-parsed","v-run","v-res"].forEach(v=>$(v).classList.toggle("hide",v!==id));$("ftr").classList.toggle("hide",id!=="v-res")}
+function toast(){const t=$("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1200)}
+function save(){try{localStorage.setItem(SK,JSON.stringify({H,R,ts:Date.now()}));localStorage.setItem(KK,JSON.stringify(K));toast()}catch(e){}}
+
+function chkR(){try{const d=JSON.parse(localStorage.getItem(SK));if(d?.R?.length){const m=Math.round((Date.now()-d.ts)/6e4),t=m<60?m+"m":Math.round(m/60)+"h",s=Object.values(K).filter(v=>v==="sold").length;$("resume-info").textContent=d.R.length+" addresses, "+t+" ago"+(s?", "+s+" sold":"");$("v-resume").classList.remove("hide");$("v-input").classList.add("hide")}}catch(e){}}
+function loadS(){try{const d=JSON.parse(localStorage.getItem(SK));if(d){H=d.H||[];R=d.R||[];showR()}}catch(e){}$("v-resume").classList.add("hide")}
+function clearS(){try{localStorage.removeItem(SK)}catch(e){}$("v-resume").classList.add("hide");sv("v-input")}
+
+function kk(r){return r.num+"|"+r.street}
+function kg(r){return K[kk(r)]||""}
+function ks(i,v){if(v)K[kk(R[i])]=v;else delete K[kk(R[i])];save();render();uRev();uKnock()}
+const KO=[{v:"",l:"Mark result"},{v:"sold",l:"Sold",c:"k-sold"},{v:"noint",l:"Not interested",c:"k-noint"},{v:"nothome",l:"Not home",c:"k-nothome"},{v:"callback",l:"Callback",c:"k-callback"},{v:"later",l:"Come back",c:"k-later"}];
+
+function ot(n){return n&&/LLC|LP\b|INC\b|CORP|PROPERTIES|HOLDINGS|BORROWER|PROPCO|RENTAL/.test(n.toUpperCase())}
+function fn(o){if(!o)return"neighbor";const p=o.split(/[,&]/)[0].trim().split(/\s+/);return p.length>=2?p[1].charAt(0)+p[1].slice(1).toLowerCase():p[0].charAt(0)+p[0].slice(1).toLowerCase()}
+
+function sc(r){if(r.connected)return 0;if(!r.inRipple)return-1;let s=50;
+if(r.fiber)s+=20;else s-=30;if(!ot(r.owner))s+=15;else s-=10;
+if(r.date){const d=(Date.now()-new Date(r.date).getTime())/864e5;if(d<90)s+=20;else if(d<180)s+=10;else if(d<365)s+=5}
+const nb=R.filter(x=>x.street===r.street);if(nb.length&&nb.filter(x=>x.connected).length/nb.length>.3)s+=10;
+return Math.max(0,Math.min(100,s))}
+
+function pitch(r){if(r.connected)return"Already a Ripple customer.";if(!r.inRipple)return"Not in Ripple's footprint.";
+const n=fn(r.owner),nb=R.filter(x=>x.street===r.street&&x.connected).sort((a,b)=>Math.abs(a.num-r.num)-Math.abs(b.num-r.num));
+if(nb.length>=2)return`Hey ${n}, I was just at ${fn(nb[0].owner)}'s at ${nb[0].num} and ${fn(nb[1].owner)}'s at ${nb[1].num} — they both switched to Ripple. 2 gig symmetrical, faster than anything else here. Didn't want you to miss out.`;
+if(nb.length===1)return`Hey ${n}, your neighbor ${fn(nb[0].owner)} at ${nb[0].num} just got on Ripple — 2 gig fiber. Have you had a chance to look into it?`;
+return`Hey ${n}, Ripple just ran fiber on your street — 2 gig symmetrical speeds. You're one of the first to get access.`}
+
+const pinSVG='<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+
+function parse(){const raw=$("input").value.trim();if(!raw)return;H=[];const seen=new Set();
+raw.split("\n").map(l=>l.trim()).filter(Boolean).forEach(l=>{let o="",a="";if(l.includes("|")){[o,a]=l.split("|").map(s=>s.trim())}else{const m=l.match(/^(\d+\s+.+)/);if(m)a=m[1].trim()}
+if(!a)return;const num=a.match(/^\d+/)?.[0];if(!num||seen.has(num+a.slice(num.length,num.length+20)))return;
+seen.add(num+a.slice(num.length,num.length+20));if(!a.match(/\d{5}/)&&!a.match(/NC/i))a+=" NC";H.push({owner:o,address:a})});
+if(!H.length)return;$("pt").textContent=H.length+" addresses";
+$("pl").innerHTML=H.map(h=>`<div class="pi"><span class="pi-n">${h.address.match(/^\d+/)?.[0]||""}</span><span class="pi-a">${h.address.replace(/^\d+\s*/,"")}</span></div>`).join("");
+sv("v-parsed")}
+
+function mkpi(t,cn,hot,kn){$(t).innerHTML=`<div class="kpi kpi-g"><div class="kpi-v">${cn}</div><div class="kpi-l">Connected</div></div><div class="kpi kpi-a"><div class="kpi-v">${hot}</div><div class="kpi-l">Hot leads</div></div><div class="kpi kpi-b"><div class="kpi-v">${kn}</div><div class="kpi-l">To knock</div></div>`}
+function uRev(){const s=R.filter(r=>kg(r)==="sold").length;$("rv-a").textContent="$"+(s*450);$("rv-s").textContent=s+" sold";$("rv-p").textContent=Math.round(R.filter(r=>sc(r)>=75).length*.15)+" more projected"}
+function uKnock(){const c={};R.forEach(r=>{const k=kg(r);if(k)c[k]=(c[k]||0)+1});const labels={sold:"Sold",noint:"Not interested",nothome:"Not home",callback:"Callback",later:"Come back"};$("kp").innerHTML=Object.entries(c).map(([k,v])=>`<span class="kp-i">${labels[k]||k} ${v}</span>`).join("")}
+
+function fil(f){fm=f;document.querySelectorAll("#v-res .sec:nth-of-type(1) .chip").forEach(p=>p.classList.remove("on"));$("f-"+f)?.classList.add("on");render()}
+function srt(s){sm=s;document.querySelectorAll("#v-res .sec:nth-of-type(2) .chip").forEach(p=>p.classList.remove("on"));$("s-"+s)?.classList.add("on");render()}
+function tog(i){op=op===i?-1:i;render()}
+
+function render(){
+const q=($("q")?.value||"").toLowerCase();
+let list=R.filter(r=>{const s=sc(r),k=kg(r);
+if(fm==="hot"&&s<75)return false;if(fm==="knock"&&(!r.inRipple||r.connected))return false;
+if(fm==="sold"&&k!=="sold")return false;if(fm==="nothome"&&k!=="nothome")return false;if(fm==="callback"&&k!=="callback")return false;
+if(q&&!(r.owner||"").toLowerCase().includes(q)&&!r.street.toLowerCase().includes(q))return false;return true});
+if(sm==="score")list.sort((a,b)=>{const sa=sc(a),sb=sc(b);if(sa<0&&sb>=0)return 1;if(sb<0&&sa>=0)return-1;return sb-sa});
+else if(sm==="street")list.sort((a,b)=>a.street.localeCompare(b.street)||a.num-b.num);
+else if(sm==="walk")list.sort((a,b)=>a.street!==b.street?a.street.localeCompare(b.street):a.num%2!==b.num%2?(b.num%2)-(a.num%2):a.num-b.num);
+else if(sm==="date")list.sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+
+$("cards").innerHTML=list.map(r=>{
+const s=sc(r),ri=R.indexOf(r),k=kg(r),isO=op===ri;
+const scC=s>=75?"sc-a":s>=50?"sc-b":s>=0?"sc-c":"sc-z";
+const tag=r.connected?'<span class="tg tg-skip">Connected</span>':s>=75?'<span class="tg tg-hot">Hot lead</span>':r.inRipple?'<span class="tg tg-knock">Knock</span>':'<span class="tg tg-na">No data</span>';
+const kc=KO.find(o=>o.v===k)?.c||"";
+let sel=`<select class="cd-sel ${kc}" onchange="event.stopPropagation();ks(${ri},this.value)" onclick="event.stopPropagation()">`;
+KO.forEach(o=>{sel+=`<option value="${o.v}"${k===o.v?" selected":""}>${o.l}</option>`});sel+="</select>";
+const p=pitch(r);
+const mapH="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.address);
+const cls=s>=75?"cd-hot":r.connected?"cd-skip":"";
+
+return`<div class="cd ${cls}">
+<div class="cd-h" onclick="tog(${ri})">
+<div class="cd-sc ${scC}">${s>=0?s:"—"}</div>
+<div class="cd-body">
+<div class="cd-r1"><span class="cd-num">${r.num}</span><span class="cd-st">${r.street}</span></div>
+${r.owner?`<div class="cd-name">${r.owner}</div>`:""}
+${r.date?`<span class="cd-date">${r.date}</span>`:""}
+</div>
+<div class="cd-tag">${tag}</div>
+</div>
+<div class="cd-bar">${sel}<a class="cd-icon" href="${mapH}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open in Maps">${pinSVG}</a></div>
+<div class="cd-pitch${isO?" open":""}"><div class="pitch-in"><div class="pitch-lbl">Suggested pitch</div><div class="pitch-txt">${p}</div><button class="pitch-btn" onclick="event.stopPropagation();navigator.clipboard.writeText(\`${p.replace(/`/g,"'").replace(/\\/g,"\\\\")}\`);this.textContent='Copied'">Copy pitch</button></div></div>
+</div>`}).join("")}
+
+async function run(){sv("v-run");stp=false;R=[];const aC={},sC={};
+for(let i=0;i<H.length;i++){if(stp)break;const h=H[i],num=h.address.match(/^\d+/)?.[0]||"";
+const stM=h.address.match(/\d+\s+(.+?)(?:\s+(?:Statesville|Monroe|Indian Trail|Carthage|Whispering|High Point|Shelby|Cherryville|NC|28\d))/i);
+const street=stM?stM[1].trim():h.address.replace(/^\d+\s*/,"").split(/\s+NC/i)[0].trim();const kw=street.split(" ")[0].toLowerCase();
+$("ra").textContent=num+" "+street;$("rc").textContent=(i+1)+"/"+H.length;
+$("rb").style.width=((i+1)/H.length*100)+"%";$("re").textContent=Math.max(1,Math.round((H.length-i)*8/60))+" min left";
+try{if(!sC[kw]){sC[kw]=await F(A+"/predefined-premises?address="+encodeURIComponent(h.address)+"&service_provider=ripple");await W(5000)}
+const arr=sC[kw]?.addressArray||[];const match=arr.find(a=>(a.full_text.startsWith(num+",")||a.full_text.startsWith(num+" "))&&a.full_text.toLowerCase().includes(kw));
+if(!match)R.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:""});
+else{const aid=match.area_id||"";if(aid&&!aC[aid]){await W(3000);aC[aid]=await F(A+"/area-has-fiber?areaId="+aid+"&service_provider=ripple")}
+const fiber=aC[aid]?.areaHasFiber==="Connected";let connected=false;
+if(match.premise_id){await W(3000);const sd=await F(A+"/query-existing-service?premiseGuid="+match.premise_id+"&service_provider=ripple");if(sd?.premiseHasService)connected=true}
+R.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:true,fiber,connected,date:match.created_at?.slice(0,10)||""})}}
+catch(e){R.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:""})}
+mkpi("rk",R.filter(r=>r.connected).length,R.filter(r=>sc(r)>=75).length,R.filter(r=>r.inRipple&&!r.connected).length)}
+save();showR()}
+
+function stopR(){stp=true;save();showR()}
+function showR(){sv("v-res");mkpi("xk",R.filter(r=>r.connected).length,R.filter(r=>sc(r)>=75).length,R.filter(r=>r.inRipple&&!r.connected).length);uRev();uKnock();render()}
+
+function dlCSV(){const sorted=[...R].sort((a,b)=>sc(b)-sc(a));
+let csv="Score,House,Street,Address,Owner,Fiber,Connected,Created,Result,Pitch\n";
+csv+=sorted.map(r=>`${sc(r)},${r.num},"${r.street}","${r.address}","${r.owner||""}",${r.fiber?"Y":"N"},${r.connected?"Y":"N"},${r.date},${kg(r)||""},"${pitch(r).replace(/"/g,'""')}"`).join("\n");
+const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="Ripple_"+new Date().toISOString().slice(0,10)+".csv";a.click()}
+
+function dlPrint(){const knock=R.filter(r=>r.inRipple&&!r.connected).sort((a,b)=>sc(b)-sc(a));
+let h='<html><head><style>body{font-family:Helvetica;font-size:11px;margin:24px;color:#111}h1{font-size:18px;font-weight:800}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ddd;padding:6px 8px;text-align:left}th{background:#111;color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:1px}.hot{background:#fffbeb}.p{font-size:10px;color:#666;font-style:italic;max-width:240px;word-wrap:break-word;line-height:1.4}.r{width:80px}</style></head><body>';
+h+='<h1>Knock List</h1><p style="color:#888">'+knock.length+' addresses &middot; '+new Date().toLocaleDateString()+'</p>';
+h+='<table><tr><th>Score</th><th>#</th><th>Street</th><th>Owner</th><th>Created</th><th>Pitch</th><th class="r">Result</th></tr>';
+knock.forEach(r=>{h+='<tr class="'+(sc(r)>=75?"hot":"")+'"><td>'+sc(r)+'</td><td>'+r.num+'</td><td>'+r.street+'</td><td>'+(r.owner||"").slice(0,24)+'</td><td>'+(r.date||"")+'</td><td class="p">'+pitch(r)+'</td><td class="r"></td></tr>'});
+h+='</table></body></html>';const w=window.open();w.document.write(h);w.document.close();w.print()}
+
+function reset(){H=[];R=[];K={};op=-1;$("input").value="";sm="score";fm="all";try{localStorage.removeItem(SK);localStorage.removeItem(KK)}catch(e){}sv("v-input")}
+
+chkR();
+</script>
+</body>
+</html>
