@@ -184,12 +184,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);-webkit-font-s
 .adv-altp{font-size:11px;color:var(--t3)}
 .adv-copy{width:100%;height:46px;margin-top:18px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)}
 .adv-hint{margin-top:26px;text-align:center;font-size:13px;color:var(--t3)}
-.adv-ins{display:flex;gap:8px;flex-wrap:wrap}
-.ins-c{flex:1;min-width:120px;background:#081418;border:1px solid var(--c3);border-radius:12px;padding:14px 12px;text-align:center;cursor:pointer;font-family:var(--font);transition:border-color .15s,background .15s}
-.ins-c:active{background:#0c1e24}
-.ins-c.loaded{border-color:#103030;background:linear-gradient(135deg,#081418,#0a1f24)}
-.ins-w{font-size:14px;font-weight:800;color:var(--t1)}
-.ins-n{font-size:12px;color:var(--teal);font-weight:700;margin-top:5px}
+.adv-days{display:flex;flex-direction:column;gap:6px}
+.day-c{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#081418;border:1px solid var(--c3);border-radius:11px;padding:12px 14px;cursor:pointer;font-family:var(--font);text-align:left;transition:border-color .15s,background .15s}
+.day-c:active{background:#0c1e24}
+.day-c.loaded{border-color:#103030}
+.day-d{font-size:14px;font-weight:800;color:var(--t1)}
+.day-sub{font-size:12px;color:var(--t3);font-weight:600}
+.day-cnt{font-size:12px;color:var(--teal);font-weight:600}
+.day-cnt b{color:var(--t1);font-weight:800}
 .ins-load{font-size:12px;color:var(--t3)}
 
 .hide{display:none}
@@ -316,9 +318,10 @@ if(P.people==="5+"||P.home==="large")b.push("A busy household has a lot of devic
 b.push("Fiber is something you keep for years. Sizing it right now means you won't outgrow it as you add devices.");
 return b.slice(0,4)}
 function advCopy(ev){const o=advRec(),b=advBullets(o.rec),r=R[advI];
-const day=instDay();let txt="Recommended for "+r.num+" "+r.street+":\n"+spLbl(o.rec.mbps)+" Fiber — $"+o.rec.price+"/mo (symmetrical)\n\n"+b.map(x=>"• "+x).join("\n");
-txt+="\n\nInstall date: "+fmtDate(day);const ic=INS[r.areaId]||{};
-WINDOWS.forEach(w=>{if(ic[w]!=null)txt+="\n"+shortWin(w)+" — "+ic[w]+" booked"});
+let txt="Recommended for "+r.num+" "+r.street+":\n"+spLbl(o.rec.mbps)+" Fiber — $"+o.rec.price+"/mo (symmetrical)\n\n"+b.map(x=>"• "+x).join("\n");
+txt+="\n\nInstall availability (next 2 weeks):";const ic=INS[r.areaId]||{};
+let any=false;instDays().forEach(ds=>{const g=ic[ds];if(g){any=true;txt+="\n"+fmtDate(ds)+" — "+WINDOWS.map(w=>shortWin(w)+": "+(g[w]||0)+" booked").join(", ")}});
+if(!any)txt+="\n(tap dates in the app to load counts)";
 navigator.clipboard.writeText(txt);const t=ev.target;t.textContent="Copied ✓";setTimeout(()=>t.textContent="Copy recommendation",1500)}
 
 /* ---- Install date + per-window booking count ---- */
@@ -327,10 +330,12 @@ function shortWin(w){return w.replace(/:00/g,"").replace(/\s*-\s*/," – ")}
 function dstr(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function stOf(addr){return((addr||"").match(/\b(NC|SC|GA|VA|TN)\b/i)||[])[1]?.toUpperCase()||"NC"}
 function instDay(){const d=new Date();d.setDate(d.getDate()+7);while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()+1);return dstr(d)}
-async function loadWindow(win){const r=R[advI],aid=r.areaId,a=PA[aid];if(!a||!a.id)return;
-if(!INS[aid])INS[aid]={};insBusy[aid+win]=true;renderAdv();
-const res=await F(SCHED+"/availability?date="+instDay()+"&state="+stOf(r.address)+"&areaId="+a.id+"&areaName="+encodeURIComponent(a.name));
-const sc=(res&&res.slotCounts)||{};WINDOWS.forEach(w=>INS[aid][w]=sc[w]||0);insBusy[aid+win]=false;renderAdv()}
+function instDays(){const out=[],d=new Date();d.setDate(d.getDate()+7);const end=new Date();end.setDate(end.getDate()+7+13);
+while(d<=end){if(d.getDay()!==0&&d.getDay()!==6)out.push(dstr(d));d.setDate(d.getDate()+1)}return out}
+async function loadDate(ds){const r=R[advI],aid=r.areaId,a=PA[aid];if(!a||!a.id)return;
+if(!INS[aid])INS[aid]={};insBusy[aid+ds]=true;renderAdv();
+const res=await F(SCHED+"/availability?date="+ds+"&state="+stOf(r.address)+"&areaId="+a.id+"&areaName="+encodeURIComponent(a.name));
+const sc=(res&&res.slotCounts)||{};INS[aid][ds]={};WINDOWS.forEach(w=>INS[aid][ds][w]=sc[w]||0);insBusy[aid+ds]=false;renderAdv()}
 function renderAdv(){const r=R[advI];if(!r){closeAdv();return}
 const peo=[["1-2","1–2 people"],["3-4","3–4 people"],["5+","5+ people"]],hom=[["small","Apartment / condo"],["avg","House"],["large","Large / multi-story"]],use=[["stream4k","4K / multiple TVs"],["gaming","Gaming"],["wfh","Work / school from home"],["smarthome","Smart home"],["cameras","Security cameras"]];
 const chip=(k,v,l)=>`<button class="adv-c${(k==="uses"?advP.uses.includes(v):advP[k]===v)?" on":""}" onclick="advSet('${k}','${v}')">${l}</button>`;
@@ -339,10 +344,13 @@ if(advP.people){const o=advRec(),b=advBullets(o.rec);
 const aid=r.areaId,ic=INS[aid]||{};
 let insHTML="";
 if(PA[aid]&&PA[aid].id){
-insHTML=`<div class="adv-q">Install date · ${fmtDate(instDay())}</div><div class="adv-ins">${WINDOWS.map(w=>{
-const busy=insBusy[aid+w],known=ic[w]!=null;
-const sub=busy?"Checking…":known?ic[w]+" booked":"Tap to check";
-return `<button class="ins-c${known?" loaded":""}" onclick="loadWindow('${w.replace(/'/g,"\\'")}')"><div class="ins-w">${shortWin(w)}</div><div class="ins-n">${sub}</div></button>`}).join("")}</div>`;}
+insHTML=`<div class="adv-q">Install dates · next 2 weeks</div><div class="adv-days">${instDays().map(ds=>{
+const busy=insBusy[aid+ds],got=ic[ds];
+let right;
+if(busy)right=`<span class="day-sub">Checking…</span>`;
+else if(got)right=`<span class="day-cnt">${WINDOWS.map(w=>shortWin(w).replace(/ – /,"–")+": <b>"+(got[w]||0)+"</b>").join(" · ")}</span>`;
+else right=`<span class="day-sub">Tap to check</span>`;
+return `<button class="day-c${got?" loaded":""}" onclick="loadDate('${ds}')"><span class="day-d">${fmtDate(ds)}</span>${right}</button>`}).join("")}</div>`;}
 res=`<div class="adv-res"><span class="adv-badge">Recommended for this home</span>
 <div class="adv-rname">${spLbl(o.rec.mbps)} Fiber</div>
 <div class="adv-rprice">$${o.rec.price}/mo · symmetrical speeds</div>
