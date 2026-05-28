@@ -184,6 +184,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);-webkit-font-s
 .adv-altp{font-size:11px;color:var(--t3)}
 .adv-copy{width:100%;height:46px;margin-top:18px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)}
 .adv-hint{margin-top:26px;text-align:center;font-size:13px;color:var(--t3)}
+.adv-ins{display:flex;gap:8px;flex-wrap:wrap}
+.ins-c{flex:1;min-width:120px;background:#081418;border:1px solid var(--c3);border-radius:12px;padding:14px 12px;text-align:center;cursor:pointer;font-family:var(--font);transition:border-color .15s,background .15s}
+.ins-c:active{background:#0c1e24}
+.ins-c.loaded{border-color:#103030;background:linear-gradient(135deg,#081418,#0a1f24)}
+.ins-w{font-size:14px;font-weight:800;color:var(--t1)}
+.ins-n{font-size:12px;color:var(--teal);font-weight:700;margin-top:5px}
+.ins-load{font-size:12px;color:var(--t3)}
 
 .hide{display:none}
 
@@ -255,8 +262,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);-webkit-font-s
 <div class="ovl hide" id="ovl"><div class="adv" id="adv"></div></div>
 
 <script>
-const A="https://ripple-api.spitfireinbound.com/api",SK="hfs6s",KK="hfs6k";
-let H=[],R=[],stp=false,sm="score",fm="all",op=-1,PL={};
+const A="https://ripple-api.spitfireinbound.com/api",SCHED="https://scheduling-server.ripplelabs.dev/api/scheduling",SK="hfs6s",KK="hfs6k";
+const WINDOWS=["8:00 AM - 12:00 PM","1:00 PM - 5:00 PM"];/* the install windows shown to customers */
+let H=[],R=[],stp=false,sm="score",fm="all",op=-1,PL={},PA={},INS={},insBusy={};
 let advI=-1,advP={people:"",home:"",uses:[]};
 let K={};try{K=JSON.parse(localStorage.getItem(KK)||"{}")}catch(e){}
 const $=id=>document.getElementById(id),W=ms=>new Promise(r=>setTimeout(r,ms));
@@ -265,10 +273,10 @@ function sv(id){["v-input","v-parsed","v-run","v-res"].forEach(v=>$(v).classList
 function toast(){const t=$("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1200)}
 let DBG=[];
 function dbg(msg,cls){DBG.push(msg);const el=$("dbg");if(el){const d=document.createElement("div");d.className="dbg-l"+(cls?" "+cls:"");d.textContent=msg;el.appendChild(d);el.scrollTop=el.scrollHeight}}
-function save(){try{localStorage.setItem(SK,JSON.stringify({H,R,PL,ts:Date.now()}));localStorage.setItem(KK,JSON.stringify(K));toast()}catch(e){}}
+function save(){try{localStorage.setItem(SK,JSON.stringify({H,R,PL,PA,ts:Date.now()}));localStorage.setItem(KK,JSON.stringify(K));toast()}catch(e){}}
 
 function chkR(){try{const d=JSON.parse(localStorage.getItem(SK));if(d?.R?.length){const m=Math.round((Date.now()-d.ts)/6e4),t=m<60?m+"m":Math.round(m/60)+"h",s=Object.values(K).filter(v=>v==="sold").length;$("resume-info").textContent=d.R.length+" addresses, "+t+" ago"+(s?", "+s+" sold":"");$("v-resume").classList.remove("hide");$("v-input").classList.add("hide")}}catch(e){}}
-function loadS(){try{const d=JSON.parse(localStorage.getItem(SK));if(d){H=d.H||[];R=d.R||[];PL=d.PL||{};showR()}}catch(e){}$("v-resume").classList.add("hide")}
+function loadS(){try{const d=JSON.parse(localStorage.getItem(SK));if(d){H=d.H||[];R=d.R||[];PL=d.PL||{};PA=d.PA||{};showR()}}catch(e){}$("v-resume").classList.add("hide")}
 function clearS(){try{localStorage.removeItem(SK)}catch(e){}$("v-resume").classList.add("hide");sv("v-input")}
 
 function kk(r){return r.num+"|"+r.street}
@@ -308,18 +316,39 @@ if(P.people==="5+"||P.home==="large")b.push("A busy household has a lot of devic
 b.push("Fiber is something you keep for years. Sizing it right now means you won't outgrow it as you add devices.");
 return b.slice(0,4)}
 function advCopy(ev){const o=advRec(),b=advBullets(o.rec),r=R[advI];
-const txt="Recommended for "+r.num+" "+r.street+":\n"+spLbl(o.rec.mbps)+" Fiber — $"+o.rec.price+"/mo (symmetrical)\n\n"+b.map(x=>"• "+x).join("\n");
+const day=instDay();let txt="Recommended for "+r.num+" "+r.street+":\n"+spLbl(o.rec.mbps)+" Fiber — $"+o.rec.price+"/mo (symmetrical)\n\n"+b.map(x=>"• "+x).join("\n");
+txt+="\n\nInstall date: "+fmtDate(day);const ic=INS[r.areaId]||{};
+WINDOWS.forEach(w=>{if(ic[w]!=null)txt+="\n"+shortWin(w)+" — "+ic[w]+" booked"});
 navigator.clipboard.writeText(txt);const t=ev.target;t.textContent="Copied ✓";setTimeout(()=>t.textContent="Copy recommendation",1500)}
+
+/* ---- Install date + per-window booking count ---- */
+function fmtDate(ds){return new Date(ds+"T12:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"})}
+function shortWin(w){return w.replace(/:00/g,"").replace(/\s*-\s*/," – ")}
+function dstr(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function stOf(addr){return((addr||"").match(/\b(NC|SC|GA|VA|TN)\b/i)||[])[1]?.toUpperCase()||"NC"}
+function instDay(){const d=new Date();d.setDate(d.getDate()+7);while(d.getDay()===0||d.getDay()===6)d.setDate(d.getDate()+1);return dstr(d)}
+async function loadWindow(win){const r=R[advI],aid=r.areaId,a=PA[aid];if(!a||!a.id)return;
+if(!INS[aid])INS[aid]={};insBusy[aid+win]=true;renderAdv();
+const res=await F(SCHED+"/availability?date="+instDay()+"&state="+stOf(r.address)+"&areaId="+a.id+"&areaName="+encodeURIComponent(a.name));
+const sc=(res&&res.slotCounts)||{};WINDOWS.forEach(w=>INS[aid][w]=sc[w]||0);insBusy[aid+win]=false;renderAdv()}
 function renderAdv(){const r=R[advI];if(!r){closeAdv();return}
 const peo=[["1-2","1–2 people"],["3-4","3–4 people"],["5+","5+ people"]],hom=[["small","Apartment / condo"],["avg","House"],["large","Large / multi-story"]],use=[["stream4k","4K / multiple TVs"],["gaming","Gaming"],["wfh","Work / school from home"],["smarthome","Smart home"],["cameras","Security cameras"]];
 const chip=(k,v,l)=>`<button class="adv-c${(k==="uses"?advP.uses.includes(v):advP[k]===v)?" on":""}" onclick="advSet('${k}','${v}')">${l}</button>`;
 let res;
 if(advP.people){const o=advRec(),b=advBullets(o.rec);
+const aid=r.areaId,ic=INS[aid]||{};
+let insHTML="";
+if(PA[aid]&&PA[aid].id){
+insHTML=`<div class="adv-q">Install date · ${fmtDate(instDay())}</div><div class="adv-ins">${WINDOWS.map(w=>{
+const busy=insBusy[aid+w],known=ic[w]!=null;
+const sub=busy?"Checking…":known?ic[w]+" booked":"Tap to check";
+return `<button class="ins-c${known?" loaded":""}" onclick="loadWindow('${w.replace(/'/g,"\\'")}')"><div class="ins-w">${shortWin(w)}</div><div class="ins-n">${sub}</div></button>`}).join("")}</div>`;}
 res=`<div class="adv-res"><span class="adv-badge">Recommended for this home</span>
 <div class="adv-rname">${spLbl(o.rec.mbps)} Fiber</div>
 <div class="adv-rprice">$${o.rec.price}/mo · symmetrical speeds</div>
 <ul class="adv-bul">${b.map(x=>`<li>${x}</li>`).join("")}</ul>
 ${o.lower||o.higher?`<div class="adv-alt">${o.lower?`<div class="adv-altc"><div class="adv-altl">Lighter option</div><div class="adv-altv">${spLbl(o.lower.mbps)}</div><div class="adv-altp">$${o.lower.price}/mo</div></div>`:""}${o.higher?`<div class="adv-altc"><div class="adv-altl">Max performance</div><div class="adv-altv">${spLbl(o.higher.mbps)}</div><div class="adv-altp">$${o.higher.price}/mo</div></div>`:""}</div>`:""}
+${insHTML}
 <button class="adv-copy" onclick="advCopy(event)">Copy recommendation</button></div>`;
 }else res=`<div class="adv-hint">Tap the household size to see a tailored recommendation.</div>`;
 $("adv").innerHTML=`<div class="adv-top"><div><h3>Plan Advisor</h3><div class="adv-addr">${r.num} ${r.street}</div></div><button class="adv-x" onclick="closeAdv()">×</button></div>
@@ -413,7 +442,7 @@ dbg("match keys: "+Object.keys(match).join(", "));
 const lat=match.latitude??match.lat??match.Latitude,lng=match.longitude??match.lng??match.lon??match.Longitude;
 if(lat==null||lng==null){dbg("✗ no coords found on premise → get-plans skipped. Check key names above.","err");}
 else dbg("✓ coords: "+lat+", "+lng,"ok");
-if(aid&&!PL[aid]&&lat!=null&&lng!=null){await W(3000);const pd=await F(A+"/get-plans?latitude="+lat+"&longitude="+lng+"&service_provider=ripple");PL[aid]=parsePlans(pd);dbg("get-plans → "+(pd?(pd.items?.length||0)+" raw items, "+PL[aid].length+" tiers kept":"no response"),PL[aid].length?"ok":"warn");}
+if(aid&&!PL[aid]&&lat!=null&&lng!=null){await W(3000);const pd=await F(A+"/get-plans?latitude="+lat+"&longitude="+lng+"&service_provider=ripple");PL[aid]=parsePlans(pd);PA[aid]={id:pd?.area?.id||"",name:pd?.area?.name||""};dbg("get-plans → "+(pd?(pd.items?.length||0)+" raw items, "+PL[aid].length+" tiers kept":"no response"),PL[aid].length?"ok":"warn");dbg("sched area: "+(PA[aid].id||"none")+" · "+(PA[aid].name||""));}
 else if(aid&&PL[aid])dbg("plans cached for area ("+PL[aid].length+" tiers)");
 R.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:true,fiber,connected,date:match.created_at?.slice(0,10)||"",areaId:aid})}}
 catch(e){dbg("✗ error: "+(e.message||e),"err");R.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:"",areaId:""})}
@@ -435,7 +464,7 @@ h+='<table><tr><th>Score</th><th>#</th><th>Street</th><th>Owner</th><th>Created<
 knock.forEach(r=>{h+='<tr class="'+(sc(r)>=75?"hot":"")+'"><td>'+sc(r)+'</td><td>'+r.num+'</td><td>'+r.street+'</td><td>'+(r.owner||"").slice(0,24)+'</td><td>'+(r.date||"")+'</td><td class="pl">'+planStr(r)+'</td><td class="p">'+pitch(r)+'</td><td class="r"></td></tr>'});
 h+='</table></body></html>';const w=window.open();w.document.write(h);w.document.close();w.print()}
 
-function reset(){H=[];R=[];K={};PL={};op=-1;$("input").value="";sm="score";fm="all";try{localStorage.removeItem(SK);localStorage.removeItem(KK)}catch(e){}sv("v-input")}
+function reset(){H=[];R=[];K={};PL={};PA={};INS={};insBusy={};op=-1;$("input").value="";sm="score";fm="all";try{localStorage.removeItem(SK);localStorage.removeItem(KK)}catch(e){}sv("v-input")}
 
 chkR();
 </script>
