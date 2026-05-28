@@ -305,9 +305,10 @@ function advRec(){const tiers=[...planList(R[advI])].sort((a,b)=>a.mbps-b.mbps);
 let score=({"1-2":1,"3-4":2,"5+":3})[P.people]||2;
 if(P.home==="large")score+=1.5;else if(P.home==="avg")score+=.5;
 if(u.includes("stream4k"))score+=1.5;if(u.includes("gaming"))score+=1;if(u.includes("wfh"))score+=1.5;if(u.includes("smarthome"))score+=1;if(u.includes("cameras"))score+=1;
-let target=score<2.5?1000:score<4.5?2000:score<6.5?5000:8000;
-if(target===1000&&(u.includes("wfh")||u.includes("gaming")))target=2000;
-const rec=tiers.find(t=>t.mbps>=target)||tiers[tiers.length-1];const ix=tiers.indexOf(rec);
+/* floor at 2 Gig — promote 2 Gig and up; bump to 5/8 Gig as usage climbs */
+let target=score<4?2000:score<6?5000:8000;
+const has2plus=tiers.some(t=>t.mbps>=2000);
+const rec=tiers.find(t=>t.mbps>=target)||(has2plus?tiers.filter(t=>t.mbps>=2000)[0]:tiers[tiers.length-1])||tiers[tiers.length-1];const ix=tiers.indexOf(rec);
 return{rec,lower:ix>0?tiers[ix-1]:null,higher:ix<tiers.length-1?tiers[ix+1]:null}}
 function advBullets(rec){const P=advP,u=P.uses,b=[],lbl=spLbl(rec.mbps);
 if(u.includes("stream4k"))b.push("Several 4K streams running at once can pull 100+ Mbps combined — "+lbl+" keeps every TV buffer-free during peak evening hours.");
@@ -315,6 +316,9 @@ if(u.includes("wfh"))b.push("Ripple is fully symmetrical, so upload speed matche
 if(u.includes("gaming"))b.push("Fiber's low, steady latency means no lag spikes mid-game, and a full title downloads in minutes instead of hours.");
 if(u.includes("smarthome")||u.includes("cameras"))b.push("Smart-home devices and cameras run 24/7 in the background — the headroom on "+lbl+" keeps them from slowing your streaming.");
 if(P.people==="5+"||P.home==="large")b.push("A busy household has a lot of devices online at the same time — "+lbl+" handles the busiest hour of the day without anyone noticing a slowdown.");
+/* always-true headroom reasons so 2 Gig+ reads solid even for lighter homes */
+b.push(lbl+" is symmetrical — your upload is as fast as your download, which is what makes video calls, photo/cloud backups and smart-home uploads feel instant.");
+b.push("The average home adds devices every year — phones, TVs, cameras, consoles. "+lbl+" gives you the headroom so the connection never becomes the bottleneck.");
 b.push("Fiber is something you keep for years. Sizing it right now means you won't outgrow it as you add devices.");
 return b.slice(0,4)}
 function advCopy(ev){const o=advRec(),b=advBullets(o.rec),r=R[advI];
@@ -355,7 +359,7 @@ res=`<div class="adv-res"><span class="adv-badge">Recommended for this home</spa
 <div class="adv-rname">${spLbl(o.rec.mbps)} Fiber</div>
 <div class="adv-rprice">$${o.rec.price}/mo · symmetrical speeds</div>
 <ul class="adv-bul">${b.map(x=>`<li>${x}</li>`).join("")}</ul>
-${o.lower||o.higher?`<div class="adv-alt">${o.lower?`<div class="adv-altc"><div class="adv-altl">Lighter option</div><div class="adv-altv">${spLbl(o.lower.mbps)}</div><div class="adv-altp">$${o.lower.price}/mo</div></div>`:""}${o.higher?`<div class="adv-altc"><div class="adv-altl">Max performance</div><div class="adv-altv">${spLbl(o.higher.mbps)}</div><div class="adv-altp">$${o.higher.price}/mo</div></div>`:""}</div>`:""}
+${(o.lower&&o.lower.mbps>=2000)||o.higher?`<div class="adv-alt">${o.lower&&o.lower.mbps>=2000?`<div class="adv-altc"><div class="adv-altl">Lighter option</div><div class="adv-altv">${spLbl(o.lower.mbps)}</div><div class="adv-altp">$${o.lower.price}/mo</div></div>`:""}${o.higher?`<div class="adv-altc"><div class="adv-altl">Max performance</div><div class="adv-altv">${spLbl(o.higher.mbps)}</div><div class="adv-altp">$${o.higher.price}/mo</div></div>`:""}</div>`:""}
 ${insHTML}
 <button class="adv-copy" onclick="advCopy(event)">Copy recommendation</button></div>`;
 }else res=`<div class="adv-hint">Tap the household size to see a tailored recommendation.</div>`;
