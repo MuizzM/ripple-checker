@@ -109,12 +109,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);-webkit-font-s
 
 /* Pitch */
 .cd-pitch{max-height:0;overflow:hidden;transition:max-height .3s ease}
-.cd-pitch.open{max-height:400px}
+.cd-pitch.open{max-height:600px}
 .pitch-in{padding:16px;background:linear-gradient(135deg,#0d0a1a,#120d20);border-top:1px solid #2a2040}
 .pitch-lbl{font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
 .pitch-txt{font-size:14px;line-height:1.8;color:var(--t2)}
 .pitch-btn{height:34px;padding:0 16px;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;transition:opacity .1s}
 .pitch-btn:active{opacity:.7}
+
+/* Plans */
+.plans{margin-top:16px;border-top:1px solid #2a2040;padding-top:14px}
+.plan-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13px}
+.plan-row+.plan-row{border-top:1px solid #1a1828}
+.plan-sp{color:var(--t1);font-weight:700}
+.plan-pr{color:var(--green);font-weight:800}
 
 /* Progress */
 .prog-c{background:var(--c1);border-radius:var(--r);padding:22px;border:1px solid var(--c2)}
@@ -153,6 +160,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);-webkit-font-s
 .ftr-in .btn{height:44px;font-size:13px}
 
 .hide{display:none}
+
+/* Debug */
+.dbg{margin-top:16px;background:#0a0a0e;border:1px solid var(--c2);border-radius:14px;overflow:hidden}
+.dbg-h{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer}
+.dbg-h span{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1.2px}
+.dbg-h .dbg-st{font-size:11px;font-weight:700;letter-spacing:0;text-transform:none}
+.dbg-log{max-height:0;overflow:auto;transition:max-height .3s ease;font-family:'SF Mono',monospace;font-size:11px;line-height:1.6}
+.dbg-log.open{max-height:320px;padding:0 16px 14px}
+.dbg-l{padding:2px 0;border-bottom:1px solid #14141c;color:var(--t2);white-space:pre-wrap;word-break:break-word}
+.dbg-l.ok{color:var(--green)}
+.dbg-l.warn{color:var(--amber)}
+.dbg-l.err{color:var(--red)}
+.dbg-l.head{color:var(--blue);font-weight:700;margin-top:6px}
 </style>
 </head>
 <body>
@@ -182,6 +202,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);-webkit-font-s
 <div class="prog-track"><div class="prog-fill" id="rb"></div></div>
 <div class="prog-sub"><span id="re"></span><span>Keep app open</span></div></div>
 <div class="kpis" id="rk"></div>
+<div class="dbg"><div class="dbg-h" onclick="this.nextElementSibling.classList.toggle('open')"><span>Debug · coordinates &amp; plans</span><span class="dbg-st" id="dbg-st" style="color:var(--t3)">tap to expand</span></div><div class="dbg-log open" id="dbg"></div></div>
 <button class="btn btn-stop" style="margin-top:20px" onclick="stopR()">Stop</button>
 </div>
 
@@ -207,16 +228,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--t1);-webkit-font-s
 
 <script>
 const A="https://ripple-api.spitfireinbound.com/api",SK="hfs6s",KK="hfs6k";
-let H=[],R=[],stp=false,sm="score",fm="all",op=-1;
+let H=[],R=[],stp=false,sm="score",fm="all",op=-1,PL={};
 let K={};try{K=JSON.parse(localStorage.getItem(KK)||"{}")}catch(e){}
 const $=id=>document.getElementById(id),W=ms=>new Promise(r=>setTimeout(r,ms));
 async function F(u){try{const r=await fetch(u);if(r.ok)return r.json();if(r.status===429)await W(15000)}catch(e){}return null}
 function sv(id){["v-input","v-parsed","v-run","v-res"].forEach(v=>$(v).classList.toggle("hide",v!==id));$("ftr").classList.toggle("hide",id!=="v-res")}
 function toast(){const t=$("toast");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1200)}
-function save(){try{localStorage.setItem(SK,JSON.stringify({H,R,ts:Date.now()}));localStorage.setItem(KK,JSON.stringify(K));toast()}catch(e){}}
+let DBG=[];
+function dbg(msg,cls){DBG.push(msg);const el=$("dbg");if(el){const d=document.createElement("div");d.className="dbg-l"+(cls?" "+cls:"");d.textContent=msg;el.appendChild(d);el.scrollTop=el.scrollHeight}}
+function save(){try{localStorage.setItem(SK,JSON.stringify({H,R,PL,ts:Date.now()}));localStorage.setItem(KK,JSON.stringify(K));toast()}catch(e){}}
 
 function chkR(){try{const d=JSON.parse(localStorage.getItem(SK));if(d?.R?.length){const m=Math.round((Date.now()-d.ts)/6e4),t=m<60?m+"m":Math.round(m/60)+"h",s=Object.values(K).filter(v=>v==="sold").length;$("resume-info").textContent=d.R.length+" addresses, "+t+" ago"+(s?", "+s+" sold":"");$("v-resume").classList.remove("hide");$("v-input").classList.add("hide")}}catch(e){}}
-function loadS(){try{const d=JSON.parse(localStorage.getItem(SK));if(d){H=d.H||[];R=d.R||[];showR()}}catch(e){}$("v-resume").classList.add("hide")}
+function loadS(){try{const d=JSON.parse(localStorage.getItem(SK));if(d){H=d.H||[];R=d.R||[];PL=d.PL||{};showR()}}catch(e){}$("v-resume").classList.add("hide")}
 function clearS(){try{localStorage.removeItem(SK)}catch(e){}$("v-resume").classList.add("hide");sv("v-input")}
 
 function kk(r){return r.num+"|"+r.street}
@@ -226,6 +249,14 @@ const KO=[{v:"",l:"Mark result"},{v:"sold",l:"Sold",c:"k-sold"},{v:"noint",l:"No
 
 function ot(n){return n&&/LLC|LP\b|INC\b|CORP|PROPERTIES|HOLDINGS|BORROWER|PROPCO|RENTAL/.test(n.toUpperCase())}
 function fn(o){if(!o)return"neighbor";const p=o.split(/[,&]/)[0].trim().split(/\s+/);return p.length>=2?p[1].charAt(0)+p[1].slice(1).toLowerCase():p[0].charAt(0)+p[0].slice(1).toLowerCase()}
+
+/* ---- Plans (get-plans API) ---- */
+function spLbl(m){return m>=1000?(m%1000===0?m/1000:(m/1000).toFixed(1))+" Gig":m+" Mbps"}
+function parsePlans(d){const items=(d?.items||[]).filter(p=>p.status==="Active"&&!p.deleted&&p.visible_to_user&&(p.categories||[]).some(c=>c.name==="Residential"));
+const by={};items.forEach(p=>{const m=parseInt(p.speed_down)||0,pr=p.pricing?.[0]?.value_incl??p.pricing?.[0]?.value;if(!m||pr==null||pr<=0)return;if(by[m]==null||pr<by[m])by[m]=pr});
+return Object.keys(by).map(m=>({mbps:+m,price:by[m]})).sort((a,b)=>a.mbps-b.mbps)}
+function planList(r){return PL[r.areaId]||[]}
+function planStr(r){const pl=planList(r);return pl.length?pl.map(p=>spLbl(p.mbps)+" $"+p.price).join(" / "):""}
 
 function sc(r){if(r.connected)return 0;if(!r.inRipple)return-1;let s=50;
 if(r.fiber)s+=20;else s-=30;if(!ot(r.owner))s+=15;else s-=10;
@@ -276,6 +307,8 @@ const kc=KO.find(o=>o.v===k)?.c||"";
 let sel=`<select class="cd-sel ${kc}" onchange="event.stopPropagation();ks(${ri},this.value)" onclick="event.stopPropagation()">`;
 KO.forEach(o=>{sel+=`<option value="${o.v}"${k===o.v?" selected":""}>${o.l}</option>`});sel+="</select>";
 const p=pitch(r);
+const pl=planList(r);
+const plHTML=(r.inRipple&&pl.length)?`<div class="plans"><div class="pitch-lbl">Plans at this address</div>${pl.map(x=>`<div class="plan-row"><span class="plan-sp">${spLbl(x.mbps)}</span><span class="plan-pr">from $${x.price}/mo</span></div>`).join("")}</div>`:"";
 const mapH="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(r.address);
 const cls=s>=75?"cd-hot":r.connected?"cd-skip":"";
 
@@ -290,10 +323,10 @@ ${r.date?`<span class="cd-date">${r.date}</span>`:""}
 <div class="cd-tag">${tag}</div>
 </div>
 <div class="cd-bar">${sel}<a class="cd-icon" href="${mapH}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Open in Maps">${pinSVG}</a></div>
-<div class="cd-pitch${isO?" open":""}"><div class="pitch-in"><div class="pitch-lbl">Suggested pitch</div><div class="pitch-txt">${p}</div><button class="pitch-btn" onclick="event.stopPropagation();navigator.clipboard.writeText(\`${p.replace(/`/g,"'").replace(/\\/g,"\\\\")}\`);this.textContent='Copied'">Copy pitch</button></div></div>
+<div class="cd-pitch${isO?" open":""}"><div class="pitch-in"><div class="pitch-lbl">Suggested pitch</div><div class="pitch-txt">${p}</div><button class="pitch-btn" onclick="event.stopPropagation();navigator.clipboard.writeText(\`${p.replace(/`/g,"'").replace(/\\/g,"\\\\")}\`);this.textContent='Copied'">Copy pitch</button>${plHTML}</div></div>
 </div>`}).join("")}
 
-async function run(){sv("v-run");stp=false;R=[];const aC={},sC={};
+async function run(){sv("v-run");stp=false;R=[];const aC={},sC={};DBG=[];if($("dbg"))$("dbg").innerHTML="";dbg("Run started · "+H.length+" addresses","head");
 for(let i=0;i<H.length;i++){if(stp)break;const h=H[i],num=h.address.match(/^\d+/)?.[0]||"";
 const stM=h.address.match(/\d+\s+(.+?)(?:\s+(?:Statesville|Monroe|Indian Trail|Carthage|Whispering|High Point|Shelby|Cherryville|NC|28\d))/i);
 const street=stM?stM[1].trim():h.address.replace(/^\d+\s*/,"").split(/\s+NC/i)[0].trim();const kw=street.split(" ")[0].toLowerCase();
@@ -301,12 +334,19 @@ $("ra").textContent=num+" "+street;$("rc").textContent=(i+1)+"/"+H.length;
 $("rb").style.width=((i+1)/H.length*100)+"%";$("re").textContent=Math.max(1,Math.round((H.length-i)*8/60))+" min left";
 try{if(!sC[kw]){sC[kw]=await F(A+"/predefined-premises?address="+encodeURIComponent(h.address)+"&service_provider=ripple");await W(5000)}
 const arr=sC[kw]?.addressArray||[];const match=arr.find(a=>(a.full_text.startsWith(num+",")||a.full_text.startsWith(num+" "))&&a.full_text.toLowerCase().includes(kw));
-if(!match)R.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:""});
+dbg(num+" "+street,"head");
+if(!match){dbg("✗ no premise match (not in footprint)","warn");R.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:"",areaId:""});}
 else{const aid=match.area_id||"";if(aid&&!aC[aid]){await W(3000);aC[aid]=await F(A+"/area-has-fiber?areaId="+aid+"&service_provider=ripple")}
 const fiber=aC[aid]?.areaHasFiber==="Connected";let connected=false;
 if(match.premise_id){await W(3000);const sd=await F(A+"/query-existing-service?premiseGuid="+match.premise_id+"&service_provider=ripple");if(sd?.premiseHasService)connected=true}
-R.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:true,fiber,connected,date:match.created_at?.slice(0,10)||""})}}
-catch(e){R.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:""})}
+dbg("match keys: "+Object.keys(match).join(", "));
+const lat=match.latitude??match.lat??match.Latitude,lng=match.longitude??match.lng??match.lon??match.Longitude;
+if(lat==null||lng==null){dbg("✗ no coords found on premise → get-plans skipped. Check key names above.","err");}
+else dbg("✓ coords: "+lat+", "+lng,"ok");
+if(aid&&!PL[aid]&&lat!=null&&lng!=null){await W(3000);const pd=await F(A+"/get-plans?latitude="+lat+"&longitude="+lng+"&service_provider=ripple");PL[aid]=parsePlans(pd);dbg("get-plans → "+(pd?(pd.items?.length||0)+" raw items, "+PL[aid].length+" tiers kept":"no response"),PL[aid].length?"ok":"warn");}
+else if(aid&&PL[aid])dbg("plans cached for area ("+PL[aid].length+" tiers)");
+R.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:true,fiber,connected,date:match.created_at?.slice(0,10)||"",areaId:aid})}}
+catch(e){dbg("✗ error: "+(e.message||e),"err");R.push({num:parseInt(num)||0,street,address:h.address,owner:h.owner,inRipple:false,fiber:false,connected:false,date:"",areaId:""})}
 mkpi("rk",R.filter(r=>r.connected).length,R.filter(r=>sc(r)>=75).length,R.filter(r=>r.inRipple&&!r.connected).length)}
 save();showR()}
 
@@ -314,18 +354,18 @@ function stopR(){stp=true;save();showR()}
 function showR(){sv("v-res");mkpi("xk",R.filter(r=>r.connected).length,R.filter(r=>sc(r)>=75).length,R.filter(r=>r.inRipple&&!r.connected).length);uRev();uKnock();render()}
 
 function dlCSV(){const sorted=[...R].sort((a,b)=>sc(b)-sc(a));
-let csv="Score,House,Street,Address,Owner,Fiber,Connected,Created,Result,Pitch\n";
-csv+=sorted.map(r=>`${sc(r)},${r.num},"${r.street}","${r.address}","${r.owner||""}",${r.fiber?"Y":"N"},${r.connected?"Y":"N"},${r.date},${kg(r)||""},"${pitch(r).replace(/"/g,'""')}"`).join("\n");
+let csv="Score,House,Street,Address,Owner,Fiber,Connected,Created,Result,Plans,Pitch\n";
+csv+=sorted.map(r=>`${sc(r)},${r.num},"${r.street}","${r.address}","${r.owner||""}",${r.fiber?"Y":"N"},${r.connected?"Y":"N"},${r.date},${kg(r)||""},"${planStr(r)}","${pitch(r).replace(/"/g,'""')}"`).join("\n");
 const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="Ripple_"+new Date().toISOString().slice(0,10)+".csv";a.click()}
 
 function dlPrint(){const knock=R.filter(r=>r.inRipple&&!r.connected).sort((a,b)=>sc(b)-sc(a));
-let h='<html><head><style>body{font-family:Helvetica;font-size:11px;margin:24px;color:#111}h1{font-size:18px;font-weight:800}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ddd;padding:6px 8px;text-align:left}th{background:#111;color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:1px}.hot{background:#fffbeb}.p{font-size:10px;color:#666;font-style:italic;max-width:240px;word-wrap:break-word;line-height:1.4}.r{width:80px}</style></head><body>';
+let h='<html><head><style>body{font-family:Helvetica;font-size:11px;margin:24px;color:#111}h1{font-size:18px;font-weight:800}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top}th{background:#111;color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:1px}.hot{background:#fffbeb}.p{font-size:10px;color:#666;font-style:italic;max-width:220px;word-wrap:break-word;line-height:1.4}.pl{font-size:9px;color:#444;max-width:120px;word-wrap:break-word}.r{width:80px}</style></head><body>';
 h+='<h1>Knock List</h1><p style="color:#888">'+knock.length+' addresses &middot; '+new Date().toLocaleDateString()+'</p>';
-h+='<table><tr><th>Score</th><th>#</th><th>Street</th><th>Owner</th><th>Created</th><th>Pitch</th><th class="r">Result</th></tr>';
-knock.forEach(r=>{h+='<tr class="'+(sc(r)>=75?"hot":"")+'"><td>'+sc(r)+'</td><td>'+r.num+'</td><td>'+r.street+'</td><td>'+(r.owner||"").slice(0,24)+'</td><td>'+(r.date||"")+'</td><td class="p">'+pitch(r)+'</td><td class="r"></td></tr>'});
+h+='<table><tr><th>Score</th><th>#</th><th>Street</th><th>Owner</th><th>Created</th><th>Plans</th><th>Pitch</th><th class="r">Result</th></tr>';
+knock.forEach(r=>{h+='<tr class="'+(sc(r)>=75?"hot":"")+'"><td>'+sc(r)+'</td><td>'+r.num+'</td><td>'+r.street+'</td><td>'+(r.owner||"").slice(0,24)+'</td><td>'+(r.date||"")+'</td><td class="pl">'+planStr(r)+'</td><td class="p">'+pitch(r)+'</td><td class="r"></td></tr>'});
 h+='</table></body></html>';const w=window.open();w.document.write(h);w.document.close();w.print()}
 
-function reset(){H=[];R=[];K={};op=-1;$("input").value="";sm="score";fm="all";try{localStorage.removeItem(SK);localStorage.removeItem(KK)}catch(e){}sv("v-input")}
+function reset(){H=[];R=[];K={};PL={};op=-1;$("input").value="";sm="score";fm="all";try{localStorage.removeItem(SK);localStorage.removeItem(KK)}catch(e){}sv("v-input")}
 
 chkR();
 </script>
